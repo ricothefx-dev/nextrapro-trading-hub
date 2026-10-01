@@ -1,40 +1,44 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Activity,
-  ArrowDownRight,
-  ArrowUpRight,
   BarChart3,
   Bell,
   Bot,
+  CalendarDays,
+  Check,
   ChevronDown,
-  CircleDollarSign,
+  ChevronRight,
+  Clipboard,
   Copy,
+  Download,
+  ExternalLink,
   Gauge,
-  HelpCircle,
+  Infinity as InfinityIcon,
+  KeyRound,
   LayoutDashboard,
-  LineChart,
+  LogOut,
   Menu,
-  MoreHorizontal,
-  Power,
+  Plus,
   Search,
-  Settings,
   ShieldCheck,
-  SlidersHorizontal,
+  Trash2,
+  TrendingUp,
   Users,
-  Wallet,
   X,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import logo from "@/assets/nextrapro-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Copy Trading Dashboard | NEXTRAPRO" },
-      { name: "description", content: "Monitor, control and grow your automated copy-trading portfolio with NEXTRAPRO." },
-      { property: "og:title", content: "NEXTRAPRO Copy Trading" },
-      { property: "og:description", content: "A focused command center for automated copy trading." },
+      { title: "Admin Dashboard | NEXTRAPRO" },
+      { name: "description", content: "Manage NEXTRAPRO licences, Expert Advisors, affiliates and copy trading." },
+      { property: "og:title", content: "NEXTRAPRO Admin Dashboard" },
+      { property: "og:description", content: "Licence and Expert Advisor management for NEXTRAPRO." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -42,132 +46,137 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const navItems = [
-  { label: "Overview", icon: LayoutDashboard },
-  { label: "Copy Trading", icon: Copy, active: true },
-  { label: "Strategies", icon: LineChart },
-  { label: "Accounts", icon: Wallet },
-  { label: "Analytics", icon: BarChart3 },
-];
+type Section = "Dashboard" | "Generate Key" | "Affiliate" | "Manage EAs" | "Key Stats" | "Copy Trading";
 
-const leaders = [
-  { name: "Apex Momentum", handle: "@apex.fx", return: "+18.42%", risk: "Medium", followers: "1,284", drawdown: "4.8%", initials: "AM" },
-  { name: "Orion Quant", handle: "@orion.quant", return: "+14.19%", risk: "Low", followers: "932", drawdown: "2.1%", initials: "OQ" },
-  { name: "Northstar Gold", handle: "@northstar", return: "+11.86%", risk: "High", followers: "647", drawdown: "8.6%", initials: "NG" },
+const navigation: Array<{ label: Section; icon: typeof LayoutDashboard; group?: string }> = [
+  { label: "Dashboard", icon: LayoutDashboard },
+  { label: "Generate Key", icon: KeyRound },
+  { label: "Affiliate", icon: Users },
+  { label: "Manage EAs", icon: Bot },
+  { label: "Key Stats", icon: BarChart3, group: "Management" },
+  { label: "Copy Trading", icon: Copy, group: "Trading" },
 ];
 
 function Index() {
+  const [section, setSection] = useState<Section>("Dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [copying, setCopying] = useState(true);
-  const [range, setRange] = useState("1M");
+  const [eaDetail, setEaDetail] = useState(false);
+  const [duration, setDuration] = useState("30 days");
+  const [confirmed, setConfirmed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [symbol, setSymbol] = useState("");
+  const [symbols, setSymbols] = useState(["XAUUSDm"]);
+
+  const selectSection = (label: Section) => {
+    setSection(label);
+    setEaDetail(false);
+    setMenuOpen(false);
+  };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background text-foreground lg:grid lg:grid-cols-[244px_1fr]">
-      {menuOpen && <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[244px] flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:static lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-5">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center overflow-hidden rounded-md bg-secondary">
-              <img src={logo} alt="NEXTRAPRO" width={1024} height={1024} className="size-16 max-w-none object-contain" />
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground lg:grid lg:grid-cols-[164px_1fr]">
+      {menuOpen && <div className="fixed inset-0 z-40 bg-background/80 lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[220px] flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:static lg:w-[164px] lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex h-[58px] items-center gap-2 border-b border-sidebar-border px-3">
+          <div className="flex size-9 items-center justify-center overflow-hidden rounded-md bg-primary/10"><img src={logo} alt="NEXTRAPRO logo" className="size-14 max-w-none object-contain" /></div>
+          <div className="text-sm font-bold">NEXTRA<span className="text-primary">PRO</span></div>
+          <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X /></Button>
+        </div>
+        <div className="mx-2 mt-4 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-2">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-xs font-bold text-primary">RT</div>
+          <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-semibold">ricothefx@...</p><p className="text-[9px] text-primary">Mentor</p></div><ChevronRight className="size-3 text-muted-foreground" />
+        </div>
+        <nav className="mt-4 flex-1">
+          {navigation.map(({ label, icon: Icon, group }, index) => (
+            <div key={label}>
+              {group && (index === 0 || navigation[index - 1]?.group !== group) && <p className="px-3 pb-2 pt-5 text-[8px] font-bold uppercase text-muted-foreground">{group}</p>}
+              <Button variant="ghost" onClick={() => selectSection(label)} className={`mb-1 h-10 w-full justify-start rounded-none border-l-2 px-3 text-[10px] ${section === label ? "border-primary bg-primary/10 text-primary" : "border-transparent text-sidebar-foreground"}`}><Icon className="size-3.5" />{label}</Button>
             </div>
-            <div><div className="text-sm font-bold">NEXTRAPRO</div><div className="text-[10px] font-medium uppercase text-muted-foreground">Trading desk</div></div>
-          </div>
-          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X /></Button>
-        </div>
-        <nav className="flex-1 space-y-1 px-3 py-6">
-          <p className="px-3 pb-2 text-[10px] font-semibold uppercase text-muted-foreground">Workspace</p>
-          {navItems.map(({ label, icon: Icon, active }) => (
-            <Button key={label} variant="ghost" className={`h-11 w-full justify-start px-3 ${active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground"}`}>
-              <Icon />{label}{active && <span className="ml-auto size-1.5 rounded-full bg-primary" />}
-            </Button>
           ))}
-          <p className="px-3 pb-2 pt-7 text-[10px] font-semibold uppercase text-muted-foreground">Manage</p>
-          <Button variant="ghost" className="h-11 w-full justify-start px-3 text-sidebar-foreground"><Users /> Community</Button>
-          <Button variant="ghost" className="h-11 w-full justify-start px-3 text-sidebar-foreground"><Settings /> Settings</Button>
         </nav>
-        <div className="m-3 border border-sidebar-border bg-secondary p-4">
-          <div className="mb-3 flex items-center gap-2 text-xs font-semibold"><ShieldCheck className="text-primary" /> Protection active</div>
-          <p className="text-[11px] leading-5 text-muted-foreground">Equity guard is monitoring your copied positions.</p>
-        </div>
-        <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
-          <div className="flex size-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">RT</div>
-          <div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">Rico Thefx</p><p className="text-[10px] text-muted-foreground">Pro account</p></div>
-          <MoreHorizontal className="size-4 text-muted-foreground" />
-        </div>
+        <Button variant="ghost" className="m-2 h-10 justify-start border border-primary/25 text-[10px] text-primary"><LogOut /> Logout</Button>
       </aside>
 
       <main className="min-w-0">
-        <header className="flex h-20 items-center gap-3 border-b border-border px-4 sm:px-7">
+        <header className="flex h-[58px] items-center border-b border-border px-3 sm:px-5">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu /></Button>
-          <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex"><span>Workspace</span><span>/</span><span className="text-foreground">Copy Trading</span></div>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm" className="hidden sm:flex"><HelpCircle /> Support</Button>
-            <Button variant="outline" size="icon" aria-label="Notifications"><Bell /></Button>
-            <Button size="sm"><CircleDollarSign /> Deposit</Button>
+            <Button variant="ghost" size="icon" aria-label="Notifications"><Bell /></Button>
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-[10px]"><CalendarDays className="size-3 text-primary" />01 Oct 2026</div>
           </div>
         </header>
 
-        <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-7 sm:py-8">
-          <section className="mb-7 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div><p className="mb-2 text-xs font-semibold uppercase text-primary">Copy desk</p><h1 className="text-3xl font-bold sm:text-4xl">Your strategy, multiplied.</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Follow proven traders, control your exposure, and monitor every copied position from one focused workspace.</p></div>
-            <div className="flex gap-2"><Button variant="outline"><SlidersHorizontal /> Risk controls</Button><Button><Search /> Find a trader</Button></div>
-          </section>
-
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              { label: "Portfolio value", value: "$24,680.40", foot: "+4.82%", icon: Wallet },
-              { label: "Copy profit", value: "+$2,184.12", foot: "+$286 this week", icon: ArrowUpRight },
-              { label: "Active strategies", value: "03", foot: "Across 4 markets", icon: Activity },
-              { label: "Risk allocation", value: "38%", foot: "Within your limit", icon: Gauge },
-            ].map(({ label, value, foot, icon: Icon }) => (
-              <div key={label} className="border border-border bg-card p-5">
-                <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{label}</span><Icon className="size-4 text-primary" /></div>
-                <div className="mt-5 text-2xl font-bold">{value}</div><div className="mt-2 text-[11px] text-muted-foreground">{foot}</div>
-              </div>
-            ))}
-          </section>
-
-          <section className="mt-3 grid gap-3 xl:grid-cols-[1.65fr_1fr]">
-            <div className="border border-border bg-card p-5 sm:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div><h2 className="font-semibold">Copy performance</h2><p className="mt-1 text-xs text-muted-foreground">Net result from followed strategies</p></div>
-                <div className="flex border border-border bg-secondary p-1">{["1W", "1M", "3M", "1Y"].map(item => <Button key={item} size="sm" variant="ghost" onClick={() => setRange(item)} className={range === item ? "bg-background text-foreground" : "text-muted-foreground"}>{item}</Button>)}</div>
-              </div>
-              <div className="mt-7 flex items-end justify-between"><div><span className="text-3xl font-bold">+$2,184.12</span><span className="ml-3 text-xs font-semibold text-success">+9.72%</span></div><span className="text-[11px] text-muted-foreground">{range} view</span></div>
-              <div className="relative mt-5 h-56 overflow-hidden border-b border-border bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:20%_25%]">
-                <svg viewBox="0 0 800 220" preserveAspectRatio="none" className="absolute inset-0 size-full" aria-label="Performance increased over the selected period" role="img">
-                  <defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--primary)" stopOpacity=".32"/><stop offset="1" stopColor="var(--primary)" stopOpacity="0"/></linearGradient></defs>
-                  <path d="M0 180 C55 174 70 140 125 148 S210 178 255 124 S332 102 375 116 S452 88 493 94 S566 52 610 68 S690 22 800 30 L800 220 L0 220 Z" fill="url(#area)" />
-                  <path d="M0 180 C55 174 70 140 125 148 S210 178 255 124 S332 102 375 116 S452 88 493 94 S566 52 610 68 S690 22 800 30" fill="none" stroke="var(--primary)" strokeWidth="3" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="border border-border bg-card p-5 sm:p-6">
-              <div className="flex items-start justify-between"><div><h2 className="font-semibold">Copy engine</h2><p className="mt-1 text-xs text-muted-foreground">Live execution status</p></div><span className={`mt-1 size-2 rounded-full ${copying ? "animate-pulse-dot bg-success" : "bg-muted-foreground"}`} /></div>
-              <div className="my-7 flex items-center justify-center"><div className="relative flex size-32 items-center justify-center rounded-full border border-primary/30 bg-accent"><Bot className="size-11 text-primary" /><div className="absolute inset-3 rounded-full border border-primary/20" /></div></div>
-              <div className="text-center"><p className="text-lg font-semibold">{copying ? "Copying is active" : "Copying is paused"}</p><p className="mt-1 text-xs text-muted-foreground">{copying ? "3 strategies synced · 12 positions" : "No new trades will be copied"}</p></div>
-              <Button className="mt-6 h-11 w-full" variant={copying ? "outline" : "default"} onClick={() => setCopying(!copying)}><Power /> {copying ? "Pause copy engine" : "Resume copy engine"}</Button>
-              <div className="mt-4 flex items-center justify-between border-t border-border pt-4 text-xs"><span className="text-muted-foreground">Execution latency</span><span className="font-semibold text-success">24 ms</span></div>
-            </div>
-          </section>
-
-          <section className="mt-3 border border-border bg-card">
-            <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-semibold">Top strategy leaders</h2><p className="mt-1 text-xs text-muted-foreground">Ranked by consistent risk-adjusted performance</p></div><Button variant="ghost" size="sm">View all <ArrowUpRight /></Button></div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-xs">
-                <thead className="text-muted-foreground"><tr className="border-b border-border"><th className="px-5 py-3 font-medium">Trader</th><th className="px-5 py-3 font-medium">30D return</th><th className="px-5 py-3 font-medium">Risk</th><th className="px-5 py-3 font-medium">Drawdown</th><th className="px-5 py-3 font-medium">Copiers</th><th className="px-5 py-3 font-medium"></th></tr></thead>
-                <tbody>{leaders.map((leader) => <tr key={leader.name} className="border-b border-border last:border-0 hover:bg-secondary/50"><td className="px-5 py-4"><div className="flex items-center gap-3"><div className="flex size-9 items-center justify-center rounded-full bg-accent font-bold text-primary">{leader.initials}</div><div><p className="font-semibold">{leader.name}</p><p className="mt-0.5 text-[10px] text-muted-foreground">{leader.handle}</p></div></div></td><td className="px-5 py-4 font-semibold text-success">{leader.return}</td><td className="px-5 py-4"><span className="border border-border bg-secondary px-2 py-1">{leader.risk}</span></td><td className="px-5 py-4">{leader.drawdown}</td><td className="px-5 py-4">{leader.followers}</td><td className="px-5 py-4 text-right"><Button size="sm">Copy</Button></td></tr>)}</tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="mt-3 grid gap-3 md:grid-cols-2">
-            <div className="flex items-center gap-4 border border-border bg-card p-5"><div className="flex size-10 items-center justify-center rounded-full bg-accent"><ArrowUpRight className="text-primary" /></div><div><p className="text-xs text-muted-foreground">Best position</p><p className="mt-1 text-sm font-semibold">XAUUSD · +$384.20</p></div><span className="ml-auto text-xs text-success">+6.2%</span></div>
-            <div className="flex items-center gap-4 border border-border bg-card p-5"><div className="flex size-10 items-center justify-center rounded-full bg-secondary"><ArrowDownRight className="text-destructive" /></div><div><p className="text-xs text-muted-foreground">Equity guard</p><p className="mt-1 text-sm font-semibold">Daily loss limit</p></div><span className="ml-auto text-xs text-muted-foreground">2.1 / 5%</span></div>
-          </section>
+        <div className="p-3 sm:p-5">
+          <Notice />
+          {section === "Dashboard" && <Dashboard />}
+          {section === "Generate Key" && <GenerateKey duration={duration} setDuration={setDuration} confirmed={confirmed} setConfirmed={setConfirmed} />}
+          {section === "Manage EAs" && (eaDetail ? <EaDetail copied={copied} setCopied={setCopied} symbol={symbol} setSymbol={setSymbol} symbols={symbols} setSymbols={setSymbols} /> : <ManageEas onOpen={() => setEaDetail(true)} />)}
+          {section === "Affiliate" && <Affiliate />}
+          {section === "Key Stats" && <KeyStats />}
+          {section === "Copy Trading" && <CopyTrading />}
         </div>
       </main>
     </div>
   );
 }
+
+function Notice() {
+  return <div className="mb-4 flex flex-col gap-3 rounded-md bg-primary px-4 py-3 text-primary-foreground shadow-[0_10px_35px_var(--primary-glow)] xl:flex-row xl:items-center">
+    <div className="min-w-0 flex-1"><p className="text-xs font-bold">NEXTRAPRO tools are moving to the mobile app</p><p className="mt-1 text-[9px] opacity-85">In 30 days, all mentor functions move into the app. Open the app now and get set up before the switch.</p></div>
+    <div className="flex flex-wrap items-center gap-1.5">{[["21","DAYS"],["20","HOURS"],["56","MIN"],["44","SEC"]].map(([n,l]) => <div key={l} className="min-w-10 rounded bg-primary-foreground/10 px-2 py-1 text-center"><b className="block text-sm">{n}</b><span className="text-[7px]">{l}</span></div>)}<Button size="sm" className="ml-1 bg-primary-foreground text-primary hover:bg-primary-foreground/90">Open the app</Button><span className="ml-1 text-[8px]">Android: coming soon</span></div>
+  </div>;
+}
+
+function Dashboard() {
+  const stats = [
+    { label: "TOTAL LICENCES", value: "3", note: "All time EA users", icon: KeyRound, tone: "bg-stat-red" },
+    { label: "ACTIVE SUBSCRIPTIONS", value: "0", note: "Current active EA users", icon: ShieldCheck, tone: "bg-stat-green" },
+    { label: "TOTAL EAS", value: "1", note: "EAs you are licencing", icon: Bot, tone: "bg-stat-blue" },
+    { label: "MAXIMUM LICENCES", value: "500", note: "Total licences you can generate", icon: InfinityIcon, tone: "bg-stat-orange" },
+  ];
+  return <>
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5"><span className="rounded-full border border-success/25 bg-success/10 px-3 py-2 text-[9px] text-success">● All systems running smoothly</span><span className="rounded-full border border-border bg-card px-3 py-2 text-[9px]"><CalendarDays className="mr-2 inline size-3 text-primary" />Today — 01 Oct 2026</span></div>
+    <section className="flex items-center gap-4 rounded-lg border border-border bg-card p-5 sm:p-7">
+      <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 shadow-[0_0_24px_var(--primary-glow)]"><ShieldCheck className="text-primary" /></div>
+      <div><h1 className="text-xl font-bold">Welcome back!</h1><p className="mt-1 text-[11px] text-muted-foreground">You have <span className="text-primary">2 active licences</span> running on your account.</p><span className="mt-3 inline-flex rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-[9px] text-primary">Mentor ID: 14384</span></div>
+    </section>
+    <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map(({ label, value, note, icon: Icon, tone }) => <div key={label} className={`${tone} min-h-36 rounded-xl p-5 text-stat-foreground shadow-lg`}><div className="flex items-center justify-between"><span className="text-[9px] font-bold">{label}</span><span className="rounded-md bg-stat-foreground/15 p-2"><Icon className="size-4" /></span></div><div className="mt-4 text-3xl font-bold">{value}</div><p className="mt-5 text-[9px] opacity-80">{note}</p>{label === "MAXIMUM LICENCES" && <Button size="sm" className="mt-3 w-full border border-stat-foreground/40 bg-stat-foreground/10 text-stat-foreground hover:bg-stat-foreground/20">Request More Keys</Button>}</div>)}</section>
+  </>;
+}
+
+function PageTitle({ icon: Icon, first, accent }: { icon: typeof KeyRound; first: string; accent: string }) {
+  return <div className="mb-4 flex items-center gap-2"><span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"><Icon className="size-4" /></span><h1 className="text-lg font-bold">{first} <span className="text-primary">{accent}</span></h1></div>;
+}
+
+function Field({ label, placeholder }: { label: string; placeholder: string }) {
+  return <label className="block"><span className="mb-2 block text-[8px] font-bold uppercase text-muted-foreground">{label}</span><Input placeholder={placeholder} className="h-9 border-border bg-input text-[10px]" /></label>;
+}
+
+function GenerateKey({ duration, setDuration, confirmed, setConfirmed }: { duration: string; setDuration: (v: string) => void; confirmed: boolean; setConfirmed: (v: boolean) => void }) {
+  const durations = ["3 days", "5 days", "30 days", "3 months", "6 months", "1 year", "Lifetime"];
+  return <><PageTitle icon={KeyRound} first="Generate" accent="License Key" /><section className="overflow-hidden rounded-lg border border-border bg-card"><div className="flex items-center gap-3 border-b border-border p-4"><span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"><KeyRound className="size-4" /></span><div><h2 className="text-xs font-bold">New License Key</h2><p className="text-[8px] text-muted-foreground">Enter user details and select the EA to authorize</p></div></div><div className="space-y-4 p-4">
+    <Field label="User name" placeholder="Enter the user's name" /><Field label="Customer email" placeholder="The key is emailed here" /><Field label="Select EA" placeholder="Choose an Expert Advisor" />
+    <div><p className="mb-2 text-[8px] font-bold uppercase text-muted-foreground">License duration</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">{durations.map(d => <Button key={d} variant="outline" onClick={() => setDuration(d)} className={`h-14 flex-col gap-1 text-xs ${duration === d ? "border-primary bg-primary/10 text-primary" : "bg-secondary"}`}>{d === "Lifetime" ? <InfinityIcon /> : <b>{d.split(" ")[0]}</b>}<span className="text-[7px] uppercase text-muted-foreground">{d.split(" ")[1] ?? "lifetime"}</span></Button>)}</div></div>
+    <div className="rounded-md border border-info/30 bg-info/10 p-3 text-[9px] text-info">The license key will be generated automatically and can be shared with the user.</div>
+    <div className="rounded-md border border-primary/25 bg-primary/5 p-3 text-[9px] text-muted-foreground"><Users className="mr-2 inline size-3 text-primary" /><span className="font-semibold text-primary">Earn as an affiliate:</span> share your referral code with this user and earn commission.</div>
+    <label className="flex items-center gap-3 rounded-md border border-border bg-secondary p-3 text-[9px]"><Checkbox checked={confirmed} onCheckedChange={v => setConfirmed(v === true)} />I confirm that I want to generate this license key</label>
+    <Button disabled={!confirmed} className="w-full"><KeyRound />Generate License Key</Button>
+  </div></section></>;
+}
+
+function ManageEas({ onOpen }: { onOpen: () => void }) {
+  return <><PageTitle icon={Bot} first="Manage" accent="Expert Advisors" /><section className="rounded-lg border border-border bg-card p-4"><h2 className="text-sm font-bold">New EA</h2><p className="mb-4 text-[9px] text-muted-foreground">Add a new Expert Advisor to licence</p><Field label="EA name" placeholder="Full EA name including version" /><label className="mt-3 flex items-center gap-3 rounded-md border border-border bg-secondary p-3 text-[9px]"><Checkbox />I confirm that I am an admin</label><div className="mt-4 flex gap-2"><Button size="sm"><Plus />Add EA</Button><Button variant="outline" size="sm">Cancel</Button></div></section>
+  <section className="mt-3 overflow-hidden rounded-lg border border-border bg-card"><div className="border-b border-border p-4"><h2 className="text-sm font-bold">Your Expert Advisors</h2><p className="text-[9px] text-muted-foreground">All EAs registered under your account</p></div><div className="grid grid-cols-[1.5fr_.7fr_.7fr_1fr_auto] items-center gap-2 px-4 py-3 text-[8px] text-muted-foreground"><span>EA</span><span>USERS</span><span>ACTIVE</span><span>CREATED</span><span>ACTIONS</span></div><div className="grid grid-cols-[1.5fr_.7fr_.7fr_1fr_auto] items-center gap-2 border-t border-border px-4 py-3 text-[9px]"><button className="text-left font-semibold text-primary" onClick={onOpen}>Matrix Scalper AI</button><b>3</b><span className="w-fit rounded-full bg-primary/10 px-2 py-1 text-primary">0</span><span className="w-fit rounded-full bg-warning/15 px-2 py-1 text-warning">2026-07-22</span><Button size="sm" variant="outline" onClick={onOpen}>View</Button></div></section></>;
+}
+
+function EaDetail({ copied, setCopied, symbol, setSymbol, symbols, setSymbols }: { copied: boolean; setCopied: (v: boolean) => void; symbol: string; setSymbol: (v: string) => void; symbols: string[]; setSymbols: (v: string[]) => void }) {
+  const addSymbol = () => { const value = symbol.trim().toUpperCase(); if (value && !symbols.includes(value)) setSymbols([...symbols, value]); setSymbol(""); };
+  return <><section className="overflow-hidden rounded-lg border border-primary/25 bg-card"><div className="bg-detail-banner p-4"><div className="flex items-center justify-between"><div><p className="text-[8px] uppercase opacity-70">Expert Advisor</p><h1 className="mt-1 text-lg font-bold">Matrix Scalper AI</h1></div><span className="rounded-full border border-warning/35 bg-warning/15 px-3 py-1 text-[8px] text-warning">Keep code private</span></div><div className="mt-4 flex items-center rounded-md border border-detail-foreground/25 bg-detail-foreground/10 p-2"><code className="min-w-0 flex-1 truncate text-[9px]">f8b9c58a3a24f8b2987c3ca636d4949</code><Button size="sm" onClick={() => setCopied(true)} className="bg-detail-foreground/10 text-detail-foreground hover:bg-detail-foreground/20">{copied ? <Check /> : <Clipboard />}{copied ? "Copied" : "Copy"}</Button></div></div><div className="grid gap-4 p-4 lg:grid-cols-[1.1fr_1fr]"><p className="text-[9px] leading-5 text-muted-foreground">This is the EA code for <b className="text-foreground">Matrix Scalper AI</b>. Embed this inside your Expert Advisor source code. Do not share this secret code with anyone.</p><div className="space-y-2"><Button variant="outline" className="w-full justify-start text-[9px]"><Download className="text-info" />Download Self Hosting Files</Button><Button variant="outline" className="w-full justify-start border-primary/25 text-[9px] text-primary"><Trash2 />Delete this EA</Button></div></div></section>
+  <section className="mt-3 overflow-hidden rounded-lg border border-border bg-card"><div className="flex items-center justify-between border-b border-border p-4"><div><h2 className="text-sm font-bold">Symbols</h2><p className="text-[9px] text-muted-foreground">Add trading symbols to Matrix Scalper AI</p></div><span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[8px] text-primary">{symbols.length} active</span></div><div className="flex gap-2 border-b border-border p-4"><Input value={symbol} onChange={e => setSymbol(e.target.value)} placeholder="e.g. USDMXN" className="h-8 max-w-xs bg-input text-[9px]" /><Button size="sm" onClick={addSymbol}><Plus />Add</Button></div><div className="p-4"><p className="mb-3 text-[8px] font-bold uppercase text-muted-foreground">Active symbols</p>{symbols.map(s => <div key={s} className="flex items-center border-t border-border py-3 text-[9px]"><span className="mr-2 size-1.5 rounded-full bg-primary" />{s}<Button variant="outline" size="sm" className="ml-auto" onClick={() => setSymbols(symbols.filter(item => item !== s))}>Remove</Button></div>)}<div className="mt-3 flex items-center gap-2 rounded-md border border-border bg-secondary px-3"><Search className="size-3 text-muted-foreground" /><Input placeholder="Search symbols (e.g. GOLD, NASDAQ, BTC...)" className="border-0 bg-transparent text-[9px] shadow-none" /></div>{["Forex major", "Forex minor", "Forex exotic", "Metals"].map((name, i) => <div key={name} className="flex items-center border-b border-border px-2 py-3 text-[8px] uppercase text-muted-foreground"><ChevronDown className="mr-2 size-3" />{name}<span className="ml-auto">{[27,40,40,24][i]}</span></div>)}</div></section></>;
+}
+
+function Affiliate() { return <><PageTitle icon={Users} first="Affiliate" accent="Program" /><EmptyPanel icon={Users} title="Your referral code" text="Share your unique NEXTRAPRO referral link and track commissions from every active renewal." action="Copy referral link" /></>; }
+function KeyStats() { return <><PageTitle icon={BarChart3} first="License" accent="Statistics" /><div className="grid gap-3 sm:grid-cols-3"><MiniStat label="Keys generated" value="3" /><MiniStat label="Active this month" value="2" /><MiniStat label="Conversion rate" value="66.7%" /></div><div className="mt-3 h-64 rounded-lg border border-border bg-card p-5"><p className="text-xs font-bold">Key activity</p><div className="mt-8 flex h-36 items-end gap-3">{[35,62,48,82,56,92,68].map((h,i) => <div key={i} className="flex-1 rounded-t bg-primary/80" style={{height:`${h}%`}} />)}</div></div></>; }
+function CopyTrading() { return <><PageTitle icon={Copy} first="Copy" accent="Trading" /><EmptyPanel icon={TrendingUp} title="Copy trading desk" text="Monitor connected strategies and manage automated trade execution from one place." action="Connect an account" /></>; }
+function MiniStat({ label, value }: { label: string; value: string }) { return <div className="rounded-lg border border-border bg-card p-5"><p className="text-[9px] uppercase text-muted-foreground">{label}</p><p className="mt-4 text-3xl font-bold text-primary">{value}</p></div>; }
+function EmptyPanel({ icon: Icon, title, text, action }: { icon: typeof Users; title: string; text: string; action: string }) { return <section className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-border bg-card p-7 text-center"><div className="flex size-14 items-center justify-center rounded-full border border-primary/25 bg-primary/10"><Icon className="text-primary" /></div><h2 className="mt-5 text-base font-bold">{title}</h2><p className="mt-2 max-w-md text-[10px] leading-5 text-muted-foreground">{text}</p><Button className="mt-5">{action}<ExternalLink /></Button></section>; }
