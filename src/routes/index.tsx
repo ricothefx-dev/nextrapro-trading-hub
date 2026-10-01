@@ -62,7 +62,8 @@ function Index() {
   const [range, setRange] = useState("1M");
 
   return (
-    <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[244px_1fr]">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground lg:grid lg:grid-cols-[244px_1fr]">
+      {menuOpen && <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[244px] flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:static lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-5">
           <div className="flex items-center gap-3">
