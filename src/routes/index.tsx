@@ -114,14 +114,14 @@ function Index() {
 
           <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {[
-              ["Portfolio value", "$24,680.40", "+4.82%", Wallet],
-              ["Copy profit", "+$2,184.12", "+$286 this week", ArrowUpRight],
-              ["Active strategies", "03", "Across 4 markets", Activity],
-              ["Risk allocation", "38%", "Within your limit", Gauge],
-            ].map(([label, value, foot, Icon]) => (
-              <div key={String(label)} className="border border-border bg-card p-5">
-                <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{label as string}</span><Icon className="size-4 text-primary" /></div>
-                <div className="mt-5 text-2xl font-bold">{value as string}</div><div className="mt-2 text-[11px] text-muted-foreground">{foot as string}</div>
+              { label: "Portfolio value", value: "$24,680.40", foot: "+4.82%", icon: Wallet },
+              { label: "Copy profit", value: "+$2,184.12", foot: "+$286 this week", icon: ArrowUpRight },
+              { label: "Active strategies", value: "03", foot: "Across 4 markets", icon: Activity },
+              { label: "Risk allocation", value: "38%", foot: "Within your limit", icon: Gauge },
+            ].map(({ label, value, foot, icon: Icon }) => (
+              <div key={label} className="border border-border bg-card p-5">
+                <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">{label}</span><Icon className="size-4 text-primary" /></div>
+                <div className="mt-5 text-2xl font-bold">{value}</div><div className="mt-2 text-[11px] text-muted-foreground">{foot}</div>
               </div>
             ))}
           </section>
