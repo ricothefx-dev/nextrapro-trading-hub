@@ -32,7 +32,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import logo from "@/assets/nextrapro-logo.png";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Admin Dashboard | NEXTRAPRO" },
@@ -94,7 +94,7 @@ function Index() {
             </div>
           ))}
         </nav>
-        <Button asChild variant="ghost" className="m-2 h-10 justify-start border border-primary/25 text-[10px] text-primary"><Link to="/welcome"><LogOut /> Logout</Link></Button>
+        <Button asChild variant="ghost" className="m-2 h-10 justify-start border border-primary/25 text-[10px] text-primary"><Link to="/"><LogOut /> Logout</Link></Button>
       </aside>
 
       <main className="min-w-0">
@@ -129,16 +129,16 @@ function Notice() {
 
 function Dashboard() {
   const stats = [
-    { label: "TOTAL LICENCES", value: "3", note: "All time EA users", icon: KeyRound, tone: "bg-stat-red" },
+    { label: "TOTAL LICENCES", value: "0", note: "All time EA users", icon: KeyRound, tone: "bg-stat-red" },
     { label: "ACTIVE SUBSCRIPTIONS", value: "0", note: "Current active EA users", icon: ShieldCheck, tone: "bg-stat-green" },
-    { label: "TOTAL EAS", value: "1", note: "EAs you are licencing", icon: Bot, tone: "bg-stat-blue" },
+    { label: "TOTAL EAS", value: "0", note: "EAs you are licencing", icon: Bot, tone: "bg-stat-blue" },
     { label: "MAXIMUM LICENCES", value: "500", note: "Total licences you can generate", icon: InfinityIcon, tone: "bg-stat-orange" },
   ];
   return <>
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5"><span className="rounded-full border border-success/25 bg-success/10 px-3 py-2 text-[9px] text-success">● All systems running smoothly</span><span className="rounded-full border border-border bg-card px-3 py-2 text-[9px]"><CalendarDays className="mr-2 inline size-3 text-primary" />Today — 01 Oct 2026</span></div>
     <section className="flex items-center gap-4 rounded-lg border border-border bg-card p-5 sm:p-7">
       <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 shadow-[0_0_24px_var(--primary-glow)]"><ShieldCheck className="text-primary" /></div>
-      <div><h1 className="text-xl font-bold">Welcome back!</h1><p className="mt-1 text-[11px] text-muted-foreground">You have <span className="text-primary">2 active licences</span> running on your account.</p><span className="mt-3 inline-flex rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-[9px] text-primary">Mentor ID: 14384</span></div>
+      <div><h1 className="text-xl font-bold">Welcome back!</h1><p className="mt-1 text-[11px] text-muted-foreground">You have <span className="text-primary">0 active licences</span> running on your account.</p><span className="mt-3 inline-flex rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-[9px] text-primary">Mentor ID: 14384</span></div>
     </section>
     <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map(({ label, value, note, icon: Icon, tone }) => <div key={label} className={`${tone} min-h-36 rounded-xl p-5 text-stat-foreground shadow-lg`}><div className="flex items-center justify-between"><span className="text-[9px] font-bold">{label}</span><span className="rounded-md bg-stat-foreground/15 p-2"><Icon className="size-4" /></span></div><div className="mt-4 text-3xl font-bold">{value}</div><p className="mt-5 text-[9px] opacity-80">{note}</p>{label === "MAXIMUM LICENCES" && <Button size="sm" className="mt-3 w-full border border-stat-foreground/40 bg-stat-foreground/10 text-stat-foreground hover:bg-stat-foreground/20">Request More Keys</Button>}</div>)}</section>
   </>;
