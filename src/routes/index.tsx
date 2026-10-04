@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   BarChart3,
   Bell,
@@ -94,7 +94,7 @@ function Index() {
             </div>
           ))}
         </nav>
-        <Button variant="ghost" className="m-2 h-10 justify-start border border-primary/25 text-[10px] text-primary"><LogOut /> Logout</Button>
+        <Button asChild variant="ghost" className="m-2 h-10 justify-start border border-primary/25 text-[10px] text-primary"><Link to="/welcome"><LogOut /> Logout</Link></Button>
       </aside>
 
       <main className="min-w-0">
