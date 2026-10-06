@@ -4,12 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logo from "@/assets/nextrapro-logo.png";
+import { TradingApp } from "@/components/trading-app";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "NEXTRAPRO | Mobile EA Hosting Service" },
-      { name: "description", content: "Host your Expert Advisors on mobile with NEXTRAPRO — low latency, 24/7 uptime, mentor licensing." },
+      { title: "NEXTRAPRO | Mobile Trading & EA Hosting" },
+      { name: "description", content: "Explore NEXTRAPRO mobile EA hosting, mentor licensing and the licence-first trading assistant preview." },
       { property: "og:title", content: "NEXTRAPRO | Mobile EA Hosting Service" },
       { property: "og:description", content: "Powerful trading automation on-the-go with NEXTRAPRO." },
       { property: "og:type", content: "website" },
@@ -41,12 +42,14 @@ function LogoCard({ small }: { small?: boolean }) {
 }
 
 function Landing() {
-  const [view, setView] = useState<"home" | "signin">("home");
+  const [view, setView] = useState<"home" | "signin" | "app">("home");
   const [showPw, setShowPw] = useState(false);
   const [ad, setAd] = useState(true);
   const [chat, setChat] = useState(true);
   const [howto, setHowto] = useState(false);
   const navigate = useNavigate();
+
+  if (view === "app") return <TradingApp onExit={() => setView("home")} />;
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -64,7 +67,7 @@ function Landing() {
         </nav>
         <div className="ml-auto flex gap-2 md:ml-0">
           <Button size="sm" className="rounded-full shadow-[0_6px_20px_var(--primary-glow)]"><Smartphone />Android</Button>
-          <Button size="sm" variant="outline" className="rounded-full"><Apple />iOS</Button>
+          <Button size="sm" variant="outline" className="rounded-full" onClick={() => setView("app")}><Apple />iOS</Button>
         </div>
       </header>
 
@@ -76,7 +79,7 @@ function Landing() {
             <p className="mt-4 max-w-md text-sm text-muted-foreground">Powerful trading automation on-the-go. Host your Expert Advisors on mobile for seamless trading with low latency and 24/7 uptime.</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button className="rounded-full shadow-[0_6px_20px_var(--primary-glow)]"><Smartphone />Get Android Now</Button>
-              <Button variant="outline" className="rounded-full"><Apple />Get iOS Now</Button>
+              <Button variant="outline" className="rounded-full" onClick={() => setView("app")}><Apple />Get iOS Now</Button>
             </div>
             <div className="mt-3 flex flex-wrap gap-3">
               <Button variant="outline" className="rounded-full border-primary/40 bg-primary/10 text-primary"><RefreshCw />Renew Access</Button>
