@@ -18,7 +18,7 @@ function Field({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export function TradingApp({ onExit }: { onExit: () => void }) {
-  const [screen, setScreen] = useState<Screen>("start");
+  const [screen, setScreen] = useState<Screen>("home");
   const [licensed, setLicensed] = useState(false);
   const [robot, setRobot] = useState(false);
   const [running, setRunning] = useState(false);
@@ -64,7 +64,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   };
   return <div className={`${theme} min-h-screen bg-background text-foreground`}>
     <header className="flex h-16 items-center justify-between border-b border-border px-4 sm:px-8">
-      <Button size="icon" variant="ghost" aria-label={screen === "start" ? "Back to website" : "Back to app home"} onClick={() => screen === "start" ? onExit() : go(licensed ? "home" : "start")}><ArrowLeft /></Button>
+      <Button size="icon" variant="ghost" aria-label={screen === "start" || screen === "home" ? "Back to website" : "Back to app home"} onClick={() => screen === "start" || screen === "home" ? onExit() : go("home")}><ArrowLeft /></Button>
       <span className="flex items-center gap-2 text-sm font-bold"><Zap className="size-4 text-primary" />NEXTRA<span className="text-primary">PRO</span></span>
       <Button size="icon" variant="ghost" aria-label="Notifications" onClick={() => setNotice(notifications ? "No new notifications." : "Notifications are turned off.")}><Bell /></Button>
     </header>
@@ -85,20 +85,20 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
 
       {screen === "home" && <>
         <section className="flex flex-col items-center py-4 text-center">
-          <span className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">{robot ? "Licence activated" : "No assistant installed"}</span>
+          <span className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">{robot ? "Licence activated" : licensed ? "No assistant installed" : "Licence not activated"}</span>
           {robot ? <img src={customImage || botImage} alt="NEXTRAPRO activated assistant" className={`size-40 border-2 border-primary object-cover shadow-[var(--trading-glow)] sm:size-44 ${shape === "Circle" ? "rounded-full" : "rounded-lg"}`} /> : <div className="flex size-40 items-center justify-center rounded-full border border-dashed border-primary/50"><Plus className="size-10 text-primary" /></div>}
-          <h1 className="mt-5 text-2xl font-bold">{robot ? "NEXTRAPRO Assistant" : "Choose your assistant"}</h1>
-          <span className="mt-3 rounded-full border border-primary/40 px-4 py-1 text-[11px] font-semibold text-primary">{running ? "Running · Demo" : robot ? "Ready · Demo licence" : "Licence active"}</span>
+          <h1 className="mt-5 text-2xl font-bold">{robot ? "NEXTRAPRO Assistant" : licensed ? "Choose your assistant" : "NEXTRAPRO"}</h1>
+          {licensed ? <span className="mt-3 rounded-full border border-primary/40 px-4 py-1 text-[11px] font-semibold text-primary">{running ? "Running · Demo" : robot ? "Ready · Demo licence" : "Licence active"}</span> : <Button className="mt-4 h-11" onClick={() => go("activate")}><KeyRound />Activate licence</Button>}
         </section>
         <div className="my-6 grid grid-cols-3 overflow-hidden rounded-lg border border-primary/40 bg-secondary p-1">
           <Button variant="ghost" disabled={!robot} onClick={() => { setRobot(false); setRunning(false); }}><X /><span>Remove</span></Button>
-          <Button variant={running ? "default" : "ghost"} disabled={!robot} onClick={() => { setRunning(!running); if (!running) setNotice("Assistant started in demo mode. No trades will be placed."); }}>{running ? <Square /> : <Play />}{running ? "Stop" : "Start"}</Button>
+          <Button variant={running ? "default" : "ghost"} disabled={licensed && !robot} onClick={() => { if (!licensed) { go("activate"); return; } setRunning(!running); if (!running) setNotice("Assistant started in demo mode. No trades will be placed."); }}>{running ? <Square /> : <Play />}{running ? "Stop" : "Start"}</Button>
           <Button variant="ghost" disabled={!robot} onClick={() => go("symbols")}><Activity />Symbols</Button>
         </div>
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Robots list</h2>
         <div className="space-y-2">
-          <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => { if (!robot) { setRobot(true); speak(); } else setNotice("NEXTRAPRO Assistant is selected."); }}><img src={customImage || botImage} alt="" className="size-10 rounded-full object-cover" /><span className="flex-1 text-left"><span className="block font-semibold">NEXTRAPRO Assistant</span><span className="block text-xs text-primary">{robot ? "Active licence" : "Available to install"}</span></span>{robot ? <Check className="text-primary" /> : <Plus />}</Button>
-          <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => go("scanner")}><span className="flex size-10 items-center justify-center rounded-full border border-primary/30"><ScanLine className="text-primary" /></span><span className="flex-1 text-left"><span className="block font-semibold">Chart Scanner</span><span className="block text-xs text-primary">AI chart analysis · Demo</span></span><ChevronRight /></Button>
+          {licensed ? <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => { if (!robot) { setRobot(true); speak(); } else setNotice("NEXTRAPRO Assistant is selected."); }}><img src={customImage || botImage} alt="" className="size-10 rounded-full object-cover" /><span className="flex-1 text-left"><span className="block font-semibold">NEXTRAPRO Assistant</span><span className="block text-xs text-primary">{robot ? "Active licence" : "Available to install"}</span></span>{robot ? <Check className="text-primary" /> : <Plus />}</Button> : <p className="rounded-lg border border-primary/30 p-5 text-center text-sm text-muted-foreground">No robot activated</p>}
+          <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => go(licensed ? "scanner" : "activate")}><span className="flex size-10 items-center justify-center rounded-full border border-primary/30"><ScanLine className="text-primary" /></span><span className="flex-1 text-left"><span className="block font-semibold">Chart Scanner</span><span className="block text-xs text-primary">AI chart analysis · Demo</span></span><ChevronRight /></Button>
         </div>
         {running && <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-success" />Assistant running · {configs.length} configured symbols · {connection === "connected" ? "Demo MT5 connected" : "MT5 disconnected"}</div>}
       </>}
@@ -133,7 +133,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
 
     <nav aria-label="App navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-20 grid-cols-3 items-center border-t border-primary/40 bg-background px-3 shadow-[var(--trading-nav-shadow)]">
       <Button variant="ghost" className={`mx-auto h-14 flex-col gap-1 text-[10px] ${screen === "meta" ? "text-primary" : "text-muted-foreground"}`} onClick={() => licensed ? go("meta") : go("activate")}><Activity />MetaTrader</Button>
-      <Button variant="ghost" className="mx-auto size-16 flex-col gap-1 rounded-full border border-primary/40 text-[10px] text-primary" onClick={() => go(licensed ? "home" : "start")}><Home />Home</Button>
+      <Button variant="ghost" className="mx-auto size-16 flex-col gap-1 rounded-full border border-primary/40 text-[10px] text-primary" onClick={() => go("home")}><Home />Home</Button>
       <Button variant="ghost" className="mx-auto h-14 flex-col gap-1 text-[10px] text-muted-foreground" onClick={() => setSettings(true)}><Settings />Settings</Button>
     </nav>
 
