@@ -9,4 +9,6 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Keep NEXTRAPRO as a single responsive trading command center at `/`; the app is currently a frontend prototype with local interaction state only.
+- Keep the landing and trading assistant at `/` using local view state, with the existing mentor dashboard at `/dashboard`; this preserves the public entry and separate mentor workflow.
+- Keep licence activation, scanner results, and MT5 connections explicitly simulated in this frontend release; no real account verification or trade execution is available.
+- Isolate the trading assistant in its own component and scoped theme; its visual settings must not change the public landing or mentor dashboard.
