@@ -14,13 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bots: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          mentor_id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          mentor_id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          mentor_id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      licences: {
+        Row: {
+          activated_at: string | null
+          bot_id: string
+          created_at: string
+          customer_name: string | null
+          expires_at: string | null
+          id: string
+          licence_key: string
+          mentor_id: string
+          revoked: boolean
+        }
+        Insert: {
+          activated_at?: string | null
+          bot_id: string
+          created_at?: string
+          customer_name?: string | null
+          expires_at?: string | null
+          id?: string
+          licence_key?: string
+          mentor_id?: string
+          revoked?: boolean
+        }
+        Update: {
+          activated_at?: string | null
+          bot_id?: string
+          created_at?: string
+          customer_name?: string | null
+          expires_at?: string | null
+          id?: string
+          licence_key?: string
+          mentor_id?: string
+          revoked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licences_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      activate_licence: {
+        Args: { _key: string }
+        Returns: {
+          bot_image: string
+          bot_name: string
+          expires_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
