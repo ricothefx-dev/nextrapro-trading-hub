@@ -120,24 +120,24 @@ function MyBots({ bots, licences, userId, onChange }: { bots: BotRow[]; licences
 
   const onFile = async (f?: File) => {
     if (!f) return;
-    if (!f.type.startsWith("image/")) return toast.error("Please choose an image file");
+    if (!f.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
     try { setImage(await resizeImage(f)); } catch (e) { toast.error((e as Error).message); }
   };
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     const n = name.trim();
-    if (!n || n.length > 80) return toast.error("Bot name must be 1–80 characters");
-    if (!image) return toast.error("Add a picture of your bot");
+    if (!n || n.length > 80) { toast.error("Bot name must be 1–80 characters"); return; }
+    if (!image) { toast.error("Add a picture of your bot"); return; }
     setBusy(true);
     const { error } = await supabase.from("bots").insert({ name: n, image_url: image, mentor_id: userId });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`${n} created`); setName(""); setImage(""); onChange();
   };
   const remove = async (b: BotRow) => {
     if (!confirm(`Delete ${b.name}? All its licence keys will stop working.`)) return;
     const { error } = await supabase.from("bots").delete().eq("id", b.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Bot deleted"); onChange();
   };
 
@@ -181,20 +181,20 @@ function GenerateKey({ bots, used, onChange, goBots }: { bots: BotRow[]; used: n
 
   const generate = async () => {
     const bot = bots.find(b => b.id === botId);
-    if (!bot) return toast.error("Choose a bot");
-    if (used >= MAX) return toast.error("You have reached your licence limit");
+    if (!bot) { toast.error("Choose a bot"); return; }
+    if (used >= MAX) { toast.error("You have reached your licence limit"); return; }
     const d = durations.find(x => x.label === duration)!;
     let expires: string | null = null;
     if (d.days === -1) {
-      if (!customDate) return toast.error("Pick an expiry date");
+      if (!customDate) { toast.error("Pick an expiry date"); return; }
       const dt = new Date(`${customDate}T23:59:59`);
-      if (dt <= new Date()) return toast.error("Expiry date must be in the future");
+      if (dt <= new Date()) { toast.error("Expiry date must be in the future"); return; }
       expires = dt.toISOString();
     } else if (d.days) expires = new Date(Date.now() + d.days * 86400000).toISOString();
     setBusy(true);
     const { data, error } = await supabase.from("licences").insert({ bot_id: bot.id, customer_name: customer.trim().slice(0, 100) || null, expires_at: expires }).select("licence_key").single();
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setCreated({ key: data.licence_key, bot: bot.name, expires }); setConfirmed(false); setCustomer(""); onChange();
   };
 
@@ -230,7 +230,7 @@ function Licences({ bots, licences, onChange }: { bots: BotRow[]; licences: Lice
   const name = (id: string) => bots.find(b => b.id === id)?.name ?? "—";
   const toggle = async (l: LicenceRow) => {
     const { error } = await supabase.from("licences").update({ revoked: !l.revoked }).eq("id", l.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     onChange();
   };
   return <><PageTitle icon={BarChart3} first="Your" accent="Licences" />
