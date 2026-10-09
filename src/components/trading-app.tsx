@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, ArrowLeft, ArrowRight, Bell, Check, ChevronRight, Home, KeyRound, Play, Plus, ScanLine, Settings, ShieldCheck, Square, Trash2, Upload, Volume2, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,10 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState(false);
   const [customImage, setCustomImage] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [botName, setBotName] = useState("NEXTRAPRO Assistant");
+  const [botImg, setBotImg] = useState("");
+  const [expires, setExpires] = useState<string | null>(null);
   const upload = useRef<HTMLInputElement>(null);
   const imageUpload = useRef<HTMLInputElement>(null);
   const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,7 +58,26 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   useEffect(() => () => { if (scanTimer.current) clearTimeout(scanTimer.current); if (connectionTimer.current) clearTimeout(connectionTimer.current); }, []);
   const theme = `trading-theme ${dark ? "trading-dark" : ""} trading-${color} ${font === "Technical" ? "font-mono" : ""}`;
   const go = (next: Screen) => { setNotice(""); setScreen(next); setSettings(false); };
-  const speak = () => { if (voice && "speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance("NEXTRAPRO assistant activated")); };
+  const speak = (name = botName) => { if (voice && "speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(`${name} activated`)); };
+  const activate = async (raw: string, silent = false) => {
+    const k = raw.trim().toUpperCase();
+    if (!k) return;
+    setActivating(true);
+    const { data, error } = await supabase.rpc("activate_licence", { _key: k });
+    setActivating(false);
+    const row = data?.[0];
+    if (error || !row) {
+      if (silent) localStorage.removeItem("nextrapro-licence");
+      else setNotice(error?.message ?? "Licence could not be activated.");
+      setLicensed(false); setRobot(false); setRunning(false);
+      return;
+    }
+    localStorage.setItem("nextrapro-licence", k);
+    setBotName(row.bot_name); setBotImg(row.bot_image ?? ""); setExpires(row.expires_at);
+    setLicensed(true); setRobot(true);
+    if (!silent) { go("home"); speak(row.bot_name); }
+  };
+  useEffect(() => { const saved = localStorage.getItem("nextrapro-licence"); if (saved) void activate(saved, true); }, []);
   const loadImage = (file: File | undefined, target: "chart" | "bot") => {
     if (!file) return;
     if (!file.type.startsWith("image/")) { setNotice("Please choose an image file."); return; }
@@ -75,10 +99,10 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
         <span className="text-xs font-semibold uppercase tracking-widest text-primary">Trading assistant</span>
         <h1 className="mt-3 text-4xl font-bold">{screen === "start" ? "NEXTRAPRO" : "Activate licence"}</h1>
         <p className="mt-4 text-sm text-muted-foreground">{screen === "start" ? "Your licence. Your assistant." : "Enter your NEXTRAPRO licence key."}</p>
-        {screen === "start" ? <Button className="mt-8 h-12 w-full" onClick={() => go("activate")}>Start<ArrowRight /></Button> : <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); if (key.trim().toUpperCase() !== "NEXTRA-DEMO") { setNotice("This preview accepts NEXTRA-DEMO only. Live licence verification is not connected."); return; } setLicensed(true); setRobot(true); go("home"); speak(); }}>
-          <Field title="Licence key"><Input value={key} onChange={e => setKey(e.target.value)} required placeholder="Enter licence key" className="h-12 font-mono" /></Field>
-          <p className="text-xs text-muted-foreground">Preview key: <span className="font-mono text-foreground">NEXTRA-DEMO</span></p>
-          <Button type="submit" className="h-12 w-full"><ShieldCheck />Activate licence</Button>
+        {screen === "start" ? <Button className="mt-8 h-12 w-full" onClick={() => go("activate")}>Start<ArrowRight /></Button> : <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); void activate(key); }}>
+          <Field title="Licence key"><Input value={key} maxLength={40} onChange={e => setKey(e.target.value)} required placeholder="NXP-XXXX-XXXX-XXXX-XXXX" className="h-12 font-mono" /></Field>
+          <p className="text-xs text-muted-foreground">Paste the key your mentor sent you.</p>
+          <Button type="submit" disabled={activating} className="h-12 w-full"><ShieldCheck />{activating ? "Checking…" : "Activate licence"}</Button>
         </form>}
         <p className="mt-6 text-xs text-muted-foreground">Demo preview · No live trades or account connections</p>
       </section>}
@@ -86,9 +110,9 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
       {screen === "home" && <>
         <section className="flex flex-col items-center py-4 text-center">
           <span className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">{robot ? "Licence activated" : licensed ? "No assistant installed" : "Licence not activated"}</span>
-          {robot ? <img src={customImage || botImage} alt="NEXTRAPRO activated assistant" className={`size-40 border-2 border-primary object-cover shadow-[var(--trading-glow)] sm:size-44 ${shape === "Circle" ? "rounded-full" : "rounded-lg"}`} /> : <div className="flex size-40 items-center justify-center rounded-full border border-dashed border-primary/50"><Plus className="size-10 text-primary" /></div>}
-          <h1 className="mt-5 text-2xl font-bold">{robot ? "NEXTRAPRO Assistant" : licensed ? "Choose your assistant" : "NEXTRAPRO"}</h1>
-          {licensed ? <span className="mt-3 rounded-full border border-primary/40 px-4 py-1 text-[11px] font-semibold text-primary">{running ? "Running · Demo" : robot ? "Ready · Demo licence" : "Licence active"}</span> : <Button className="mt-4 h-11" onClick={() => go("activate")}><KeyRound />Activate licence</Button>}
+          {robot ? <img src={customImage || botImg || botImage} alt="NEXTRAPRO activated assistant" className={`size-40 border-2 border-primary object-cover shadow-[var(--trading-glow)] sm:size-44 ${shape === "Circle" ? "rounded-full" : "rounded-lg"}`} /> : <div className="flex size-40 items-center justify-center rounded-full border border-dashed border-primary/50"><Plus className="size-10 text-primary" /></div>}
+          <h1 className="mt-5 text-2xl font-bold">{robot ? botName : licensed ? "Choose your assistant" : "NEXTRAPRO"}</h1>
+          {licensed ? <span className="mt-3 rounded-full border border-primary/40 px-4 py-1 text-[11px] font-semibold text-primary">{running ? "Running" : robot ? (expires ? `Licence until ${new Date(expires).toLocaleDateString()}` : "Lifetime licence") : "Licence active"}</span> : <Button className="mt-4 h-11" onClick={() => go("activate")}><KeyRound />Activate licence</Button>}
         </section>
         <div className="my-6 grid grid-cols-3 overflow-hidden rounded-lg border border-primary/40 bg-secondary p-1">
           <Button variant="ghost" disabled={!robot} onClick={() => { setRobot(false); setRunning(false); }}><X /><span>Remove</span></Button>
@@ -97,7 +121,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
         </div>
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Robots list</h2>
         <div className="space-y-2">
-          {licensed ? <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => { if (!robot) { setRobot(true); speak(); } else setNotice("NEXTRAPRO Assistant is selected."); }}><img src={customImage || botImage} alt="" className="size-10 rounded-full object-cover" /><span className="flex-1 text-left"><span className="block font-semibold">NEXTRAPRO Assistant</span><span className="block text-xs text-primary">{robot ? "Active licence" : "Available to install"}</span></span>{robot ? <Check className="text-primary" /> : <Plus />}</Button> : <p className="rounded-lg border border-primary/30 p-5 text-center text-sm text-muted-foreground">No robot activated</p>}
+          {licensed ? <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => { if (!robot) { setRobot(true); speak(); } else setNotice(`${botName} is selected.`); }}><img src={customImage || botImg || botImage} alt="" className="size-10 rounded-full object-cover" /><span className="flex-1 text-left"><span className="block font-semibold">{botName}</span><span className="block text-xs text-primary">{robot ? "Active licence" : "Available to install"}</span></span>{robot ? <Check className="text-primary" /> : <Plus />}</Button> : <p className="rounded-lg border border-primary/30 p-5 text-center text-sm text-muted-foreground">No robot activated</p>}
           <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => go(licensed ? "scanner" : "activate")}><span className="flex size-10 items-center justify-center rounded-full border border-primary/30"><ScanLine className="text-primary" /></span><span className="flex-1 text-left"><span className="block font-semibold">Chart Scanner</span><span className="block text-xs text-primary">AI chart analysis · Demo</span></span><ChevronRight /></Button>
         </div>
         {running && <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-success" />Assistant running · {configs.length} configured symbols · {connection === "connected" ? "Demo MT5 connected" : "MT5 disconnected"}</div>}
@@ -142,7 +166,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
     <Dialog open={settings} onOpenChange={setSettings}><DialogContent className={`${theme} inset-y-0 left-auto right-0 flex h-dvh w-[min(360px,100%)] max-w-none translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none border-l border-primary/30 pt-9`}><DialogTitle>NEXTRAPRO</DialogTitle><DialogDescription>Configuration</DialogDescription>
       <div className="flex items-center justify-between rounded-md border border-border p-3 text-sm">Notifications<Switch checked={notifications} onCheckedChange={setNotifications} aria-label="Notifications enabled" /></div>
       <div className="flex items-center justify-between rounded-md border border-border p-3 text-sm">Activation voice<Switch checked={voice} onCheckedChange={setVoice} aria-label="Activation voice" /></div>
-      <Button variant="outline" disabled={!robot} onClick={speak}><Volume2 />Listen to assistant</Button>
+      <Button variant="outline" disabled={!robot} onClick={() => speak()}><Volume2 />Listen to assistant</Button>
       <div className="flex items-center justify-between rounded-md border border-border p-3 text-sm">Dark interface<Switch checked={dark} onCheckedChange={setDark} aria-label="Dark interface" /></div>
       <Field title="Interface colour"><div className="flex gap-3">{["pink", "green", "blue"].map(item => <Button key={item} size="icon" variant="outline" className={`trading-${item} rounded-full border-primary bg-primary text-primary-foreground`} aria-label={`${item} accent`} aria-pressed={color === item} onClick={() => setColor(item)}>{color === item && <Check />}</Button>)}</div></Field>
       <Field title="Interface shape"><Choice value={shape} onChange={setShape} label="Interface shape" options={["Circle", "Square"]} /></Field>

@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { Apple, ChevronDown, DollarSign, Eye, EyeOff, LogIn, MessageSquare, RefreshCw, Smartphone, UserPlus, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,57 @@ function LogoCard({ small }: { small?: boolean }) {
       <span className="-mt-2 text-sm font-bold italic text-background">NEXTRA<span className="text-primary">PRO</span></span>
     </div>
   );
+}
+
+function MentorAuth({ onDone, showPw, setShowPw }: { onDone: () => void; showPw: boolean; setShowPw: (v: boolean) => void }) {
+  const [mode, setMode] = useState<"in" | "up" | "reset">("in");
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMsg(null);
+    const em = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(em) || em.length > 255) { setMsg({ ok: false, text: "Enter a valid email address" }); return; }
+    if (mode !== "reset" && (pw.length < 8 || pw.length > 72)) { setMsg({ ok: false, text: "Password must be 8–72 characters" }); return; }
+    setBusy(true);
+    if (mode === "in") {
+      const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
+      setBusy(false);
+      if (error) { setMsg({ ok: false, text: error.message }); return; }
+      onDone();
+    } else if (mode === "up") {
+      const { data, error } = await supabase.auth.signUp({ email: em, password: pw, options: { emailRedirectTo: window.location.origin } });
+      setBusy(false);
+      if (error) { setMsg({ ok: false, text: error.message }); return; }
+      if (data.session) onDone();
+      else setMsg({ ok: true, text: "Account created. Check your email and click the confirmation link, then sign in." });
+    } else {
+      const { error } = await supabase.auth.resetPasswordForEmail(em, { redirectTo: window.location.origin });
+      setBusy(false);
+      setMsg(error ? { ok: false, text: error.message } : { ok: true, text: "If that email has an account, a reset link is on its way." });
+    }
+  };
+
+  return <>
+    <h2 className="mt-6 font-bold">{mode === "in" ? "Sign in" : mode === "up" ? "Create mentor account" : "Reset password"}</h2>
+    <form className="mt-4 space-y-4" onSubmit={submit}>
+      <label className="block text-xs font-semibold">Email address<Input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" className="mt-2 h-11 bg-background" /></label>
+      {mode !== "reset" && <label className="block text-xs font-semibold">Password
+        <div className="relative mt-2">
+          <Input type={showPw ? "text" : "password"} value={pw} onChange={e => setPw(e.target.value)} required placeholder="At least 8 characters" className="h-11 bg-background pr-10" />
+          <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-3 text-muted-foreground" aria-label="Toggle password">{showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
+        </div>
+      </label>}
+      {msg && <p className={`rounded-md border p-2 text-xs ${msg.ok ? "border-success/40 text-success" : "border-destructive/40 text-destructive"}`}>{msg.text}</p>}
+      <Button type="submit" disabled={busy} className="h-11 w-full rounded-full shadow-[0_6px_20px_var(--primary-glow)]">{busy ? "Please wait…" : mode === "in" ? "Sign In" : mode === "up" ? "Create account" : "Send reset link"}</Button>
+    </form>
+    {mode === "in" && <button onClick={() => { setMode("reset"); setMsg(null); }} className="mt-4 block w-full text-center text-xs text-muted-foreground">Forgot password?</button>}
+    <div className="my-5 flex items-center gap-3 font-mono text-[9px] tracking-widest text-muted-foreground"><span className="h-px flex-1 bg-border" />MENTOR ACCESS<span className="h-px flex-1 bg-border" /></div>
+    <p className="text-center text-xs">{mode === "in" ? "Do not have an account? " : "Already have an account? "}<button onClick={() => { setMode(mode === "in" ? "up" : "in"); setMsg(null); }} className="text-primary">{mode === "in" ? "Create account" : "Sign in"}</button></p>
+  </>;
 }
 
 function Landing() {
@@ -131,20 +183,7 @@ function Landing() {
                 <img src={logo} alt="" className="size-10 rounded-lg bg-foreground object-contain" />
                 <div><p className="text-lg font-bold leading-none">Mentor</p><p className="font-mono text-[9px] tracking-widest text-muted-foreground">ADMIN DASHBOARD</p></div>
               </div>
-              <h2 className="mt-6 font-bold">Sign in</h2>
-              <form className="mt-4 space-y-4" onSubmit={(e) => { e.preventDefault(); navigate({ to: "/dashboard" }); }}>
-                <label className="block text-xs font-semibold">Email address<Input type="email" required placeholder="you@example.com" className="mt-2 h-11 bg-background" /></label>
-                <label className="block text-xs font-semibold">Password
-                  <div className="relative mt-2">
-                    <Input type={showPw ? "text" : "password"} required placeholder="Your password" className="h-11 bg-background pr-10" />
-                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-3 text-muted-foreground" aria-label="Toggle password">{showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
-                  </div>
-                </label>
-                <Button type="submit" className="h-11 w-full rounded-full shadow-[0_6px_20px_var(--primary-glow)]">Sign In</Button>
-              </form>
-              <p className="mt-4 text-center text-xs text-muted-foreground">Forgot password?</p>
-              <div className="my-5 flex items-center gap-3 font-mono text-[9px] tracking-widest text-muted-foreground"><span className="h-px flex-1 bg-border" />ADMIN ACCESS ONLY<span className="h-px flex-1 bg-border" /></div>
-              <p className="text-center text-xs">Do not have an account? <Link to="/dashboard" className="text-primary">Create account</Link></p>
+              <MentorAuth onDone={() => navigate({ to: "/dashboard" })} showPw={showPw} setShowPw={setShowPw} />
               <p className="mt-4 text-center text-[10px] text-muted-foreground">Terms of Use · Privacy Policy</p>
             </div>
           </div>
