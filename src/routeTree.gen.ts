@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ApiPublicEaPollRouteImport } from './routes/api/public/ea/poll'
+import { Route as ApiPublicEaSignalRouteImport } from './routes/api/public/ea/signal'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -27,32 +29,57 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicEaPollRoute = ApiPublicEaPollRouteImport.update({
+  id: '/api/public/ea/poll',
+  path: '/api/public/ea/poll',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicEaSignalRoute = ApiPublicEaSignalRouteImport.update({
+  id: '/api/public/ea/signal',
+  path: '/api/public/ea/signal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/public/ea/poll': typeof ApiPublicEaPollRoute
+  '/api/public/ea/signal': typeof ApiPublicEaSignalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/public/ea/poll': typeof ApiPublicEaPollRoute
+  '/api/public/ea/signal': typeof ApiPublicEaSignalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/public/ea/poll': typeof ApiPublicEaPollRoute
+  '/api/public/ea/signal': typeof ApiPublicEaSignalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard'
+  fullPaths:
+    '/' | '/dashboard' | '/api/public/ea/poll' | '/api/public/ea/signal'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard'
-  id: '__root__' | '/' | '/_authenticated' | '/_authenticated/dashboard'
+  to: '/' | '/dashboard' | '/api/public/ea/poll' | '/api/public/ea/signal'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/_authenticated/dashboard'
+    | '/api/public/ea/poll'
+    | '/api/public/ea/signal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ApiPublicEaPollRoute: typeof ApiPublicEaPollRoute
+  ApiPublicEaSignalRoute: typeof ApiPublicEaSignalRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -78,6 +105,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/ea/poll': {
+      id: '/api/public/ea/poll'
+      path: '/api/public/ea/poll'
+      fullPath: '/api/public/ea/poll'
+      preLoaderRoute: typeof ApiPublicEaPollRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ea/signal': {
+      id: '/api/public/ea/signal'
+      path: '/api/public/ea/signal'
+      fullPath: '/api/public/ea/signal'
+      preLoaderRoute: typeof ApiPublicEaSignalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -95,6 +136,8 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ApiPublicEaPollRoute: ApiPublicEaPollRoute,
+  ApiPublicEaSignalRoute: ApiPublicEaSignalRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
