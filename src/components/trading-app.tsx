@@ -46,6 +46,10 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState(false);
   const [customImage, setCustomImage] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [botName, setBotName] = useState("NEXTRAPRO Assistant");
+  const [botImg, setBotImg] = useState("");
+  const [expires, setExpires] = useState<string | null>(null);
   const upload = useRef<HTMLInputElement>(null);
   const imageUpload = useRef<HTMLInputElement>(null);
   const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,7 +57,26 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   useEffect(() => () => { if (scanTimer.current) clearTimeout(scanTimer.current); if (connectionTimer.current) clearTimeout(connectionTimer.current); }, []);
   const theme = `trading-theme ${dark ? "trading-dark" : ""} trading-${color} ${font === "Technical" ? "font-mono" : ""}`;
   const go = (next: Screen) => { setNotice(""); setScreen(next); setSettings(false); };
-  const speak = () => { if (voice && "speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance("NEXTRAPRO assistant activated")); };
+  const speak = (name = botName) => { if (voice && "speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(`${name} activated`)); };
+  const activate = async (raw: string, silent = false) => {
+    const k = raw.trim().toUpperCase();
+    if (!k) return;
+    setActivating(true);
+    const { data, error } = await supabase.rpc("activate_licence", { _key: k });
+    setActivating(false);
+    const row = data?.[0];
+    if (error || !row) {
+      if (silent) localStorage.removeItem("nextrapro-licence");
+      else setNotice(error?.message ?? "Licence could not be activated.");
+      setLicensed(false); setRobot(false); setRunning(false);
+      return;
+    }
+    localStorage.setItem("nextrapro-licence", k);
+    setBotName(row.bot_name); setBotImg(row.bot_image ?? ""); setExpires(row.expires_at);
+    setLicensed(true); setRobot(true);
+    if (!silent) { go("home"); speak(row.bot_name); }
+  };
+  useEffect(() => { const saved = localStorage.getItem("nextrapro-licence"); if (saved) void activate(saved, true); }, []);
   const loadImage = (file: File | undefined, target: "chart" | "bot") => {
     if (!file) return;
     if (!file.type.startsWith("image/")) { setNotice("Please choose an image file."); return; }
@@ -75,10 +98,10 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
         <span className="text-xs font-semibold uppercase tracking-widest text-primary">Trading assistant</span>
         <h1 className="mt-3 text-4xl font-bold">{screen === "start" ? "NEXTRAPRO" : "Activate licence"}</h1>
         <p className="mt-4 text-sm text-muted-foreground">{screen === "start" ? "Your licence. Your assistant." : "Enter your NEXTRAPRO licence key."}</p>
-        {screen === "start" ? <Button className="mt-8 h-12 w-full" onClick={() => go("activate")}>Start<ArrowRight /></Button> : <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); if (key.trim().toUpperCase() !== "NEXTRA-DEMO") { setNotice("This preview accepts NEXTRA-DEMO only. Live licence verification is not connected."); return; } setLicensed(true); setRobot(true); go("home"); speak(); }}>
-          <Field title="Licence key"><Input value={key} onChange={e => setKey(e.target.value)} required placeholder="Enter licence key" className="h-12 font-mono" /></Field>
-          <p className="text-xs text-muted-foreground">Preview key: <span className="font-mono text-foreground">NEXTRA-DEMO</span></p>
-          <Button type="submit" className="h-12 w-full"><ShieldCheck />Activate licence</Button>
+        {screen === "start" ? <Button className="mt-8 h-12 w-full" onClick={() => go("activate")}>Start<ArrowRight /></Button> : <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); void activate(key); }}>
+          <Field title="Licence key"><Input value={key} maxLength={40} onChange={e => setKey(e.target.value)} required placeholder="NXP-XXXX-XXXX-XXXX-XXXX" className="h-12 font-mono" /></Field>
+          <p className="text-xs text-muted-foreground">Paste the key your mentor sent you.</p>
+          <Button type="submit" disabled={activating} className="h-12 w-full"><ShieldCheck />{activating ? "Checking…" : "Activate licence"}</Button>
         </form>}
         <p className="mt-6 text-xs text-muted-foreground">Demo preview · No live trades or account connections</p>
       </section>}
