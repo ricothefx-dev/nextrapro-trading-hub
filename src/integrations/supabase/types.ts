@@ -17,6 +17,7 @@ export type Database = {
       bots: {
         Row: {
           created_at: string
+          ea_token: string
           id: string
           image_url: string | null
           mentor_id: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          ea_token?: string
           id?: string
           image_url?: string | null
           mentor_id?: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          ea_token?: string
           id?: string
           image_url?: string | null
           mentor_id?: string
@@ -42,39 +45,104 @@ export type Database = {
         Row: {
           activated_at: string | null
           bot_id: string
+          copy_enabled: boolean
           created_at: string
           customer_name: string | null
           expires_at: string | null
           id: string
           licence_key: string
+          max_trades_day: number
           mentor_id: string
           revoked: boolean
+          risk_mode: string
+          risk_value: number
         }
         Insert: {
           activated_at?: string | null
           bot_id: string
+          copy_enabled?: boolean
           created_at?: string
           customer_name?: string | null
           expires_at?: string | null
           id?: string
           licence_key?: string
+          max_trades_day?: number
           mentor_id?: string
           revoked?: boolean
+          risk_mode?: string
+          risk_value?: number
         }
         Update: {
           activated_at?: string | null
           bot_id?: string
+          copy_enabled?: boolean
           created_at?: string
           customer_name?: string | null
           expires_at?: string | null
           id?: string
           licence_key?: string
+          max_trades_day?: number
           mentor_id?: string
           revoked?: boolean
+          risk_mode?: string
+          risk_value?: number
         }
         Relationships: [
           {
             foreignKeyName: "licences_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signals: {
+        Row: {
+          action: string
+          bot_id: string
+          created_at: string
+          id: number
+          mentor_id: string
+          price: number | null
+          side: string | null
+          sl: number | null
+          symbol: string
+          ticket: number
+          tp: number | null
+          volume: number | null
+        }
+        Insert: {
+          action: string
+          bot_id: string
+          created_at?: string
+          id?: number
+          mentor_id: string
+          price?: number | null
+          side?: string | null
+          sl?: number | null
+          symbol: string
+          ticket: number
+          tp?: number | null
+          volume?: number | null
+        }
+        Update: {
+          action?: string
+          bot_id?: string
+          created_at?: string
+          id?: number
+          mentor_id?: string
+          price?: number | null
+          side?: string | null
+          sl?: number | null
+          symbol?: string
+          ticket?: number
+          tp?: number | null
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signals_bot_id_fkey"
             columns: ["bot_id"]
             isOneToOne: false
             referencedRelation: "bots"
@@ -94,6 +162,26 @@ export type Database = {
           bot_name: string
           expires_at: string
         }[]
+      }
+      licence_copy_status: {
+        Args: { _key: string }
+        Returns: {
+          copy_enabled: boolean
+          max_trades_day: number
+          recent: Json
+          risk_mode: string
+          risk_value: number
+        }[]
+      }
+      set_licence_risk: {
+        Args: {
+          _enabled: boolean
+          _key: string
+          _max: number
+          _mode: string
+          _value: number
+        }
+        Returns: undefined
       }
     }
     Enums: {
