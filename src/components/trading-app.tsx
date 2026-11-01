@@ -57,6 +57,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const dark = ["Beast Mode", "The MCP", "Old School", "The VTX"].includes(preferences.mode);
   const theme = `trading-theme ${dark ? "trading-dark" : ""} trading-${preferences.color} trading-font-${preferences.font.toLowerCase().replaceAll(" ", "-")} trading-mode-${preferences.mode.toLowerCase().replaceAll(" ", "-")}`;
   const robotPicture = licensed && robot ? customImage || botImg : "";
+  const customTheme = preferences.color === "custom" ? { "--primary": preferences.shade, "--ring": preferences.shade } as CSSProperties : undefined;
   const go = (next: Screen) => { setNotice(""); setScreen(next); };
   const speak = (name = botName) => { if (voice && "speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(`${name} activated`)); };
   const activate = async (raw: string, silent = false) => {
