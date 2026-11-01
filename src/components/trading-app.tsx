@@ -1,12 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
-import { Activity, ArrowLeft, ArrowRight, Bell, Check, ChevronRight, Home, KeyRound, Play, Plus, ScanLine, Settings, ShieldCheck, Square, Trash2, Upload, Volume2, X, Zap } from "lucide-react";
+import { Activity, ArrowLeft, ArrowRight, Bell, Check, ChevronRight, Home, KeyRound, Play, Plus, ScanLine, Settings, ShieldCheck, Square, Trash2, Upload, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TradingConfiguration, defaultInterface, type InterfacePreferences } from "@/components/trading-configuration";
+type InterfacePreferences = { mode: string; shape: string; font: string; color: string; shade: string; background: boolean; animation: boolean; imageMode: string };
+const defaultInterface: InterfacePreferences = { mode: "Beast Mode", shape: "The Oracle", font: "Regular", color: "orange", shade: "#ff6a00", background: true, animation: false, imageMode: "Robot picture" };
 import { TradingMetaConnect } from "@/components/trading-meta-connect";
 
 type Screen = "start" | "activate" | "home" | "symbols" | "scanner" | "meta" | "livechart";
@@ -26,7 +27,6 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const [running, setRunning] = useState(false);
   const [key, setKey] = useState("");
   const [notice, setNotice] = useState("");
-  const [settings, setSettings] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [voice, setVoice] = useState(true);
   const [preferences, setPreferences] = useState<InterfacePreferences>(defaultInterface);
@@ -47,7 +47,6 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const [botImg, setBotImg] = useState("");
   const [expires, setExpires] = useState<string | null>(null);
   const upload = useRef<HTMLInputElement>(null);
-  const imageUpload = useRef<HTMLInputElement>(null);
   const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (scanTimer.current) clearTimeout(scanTimer.current); }, []);
   useEffect(() => {
@@ -59,7 +58,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const theme = `trading-theme ${dark ? "trading-dark" : ""} trading-${preferences.color} trading-font-${preferences.font.toLowerCase().replaceAll(" ", "-")} trading-mode-${preferences.mode.toLowerCase().replaceAll(" ", "-")}`;
   const robotPicture = licensed && robot ? customImage || botImg : "";
   const customTheme = preferences.color === "custom" ? { "--primary": preferences.shade, "--ring": preferences.shade } as CSSProperties : undefined;
-  const go = (next: Screen) => { setNotice(""); setScreen(next); setSettings(false); };
+  const go = (next: Screen) => { setNotice(""); setScreen(next); };
   const speak = (name = botName) => { if (voice && "speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(`${name} activated`)); };
   const activate = async (raw: string, silent = false) => {
     const k = raw.trim().toUpperCase();
@@ -80,12 +79,12 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
     if (!silent) { go("home"); speak(row.bot_name); }
   };
   useEffect(() => { const saved = localStorage.getItem("nextrapro-licence"); if (saved) void activate(saved, true); }, []);
-  const loadImage = (file: File | undefined, target: "chart" | "bot") => {
+  const loadImage = (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) { setNotice("Please choose an image file."); return; }
     if (file.size > 10 * 1024 * 1024) { setNotice("Choose an image smaller than 10 MB."); return; }
     const reader = new FileReader();
-    reader.onload = () => { if (typeof reader.result !== "string") return; if (target === "chart") { setChart(reader.result); setResult(false); } else setCustomImage(reader.result); setNotice(""); };
+    reader.onload = () => { if (typeof reader.result !== "string") return; setChart(reader.result); setResult(false); setNotice(""); };
     reader.readAsDataURL(file);
   };
   return <div style={customTheme} className={`${theme} relative isolate min-h-screen bg-background text-foreground`}>
@@ -111,23 +110,23 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
       </section>}
 
       {screen === "home" && <>
-        <section className="flex flex-col items-center py-4 text-center">
-          <span className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">{robot ? "Licence activated" : licensed ? "No assistant installed" : "Licence not activated"}</span>
-          {robot ? <img src={customImage || botImg} alt="NEXTRAPRO activated assistant" className={`size-40 border-2 border-primary object-cover shadow-[var(--trading-glow)] sm:size-44 ${preferences.shape === "The Oracle" ? "rounded-full" : preferences.shape === "Watch Tower" ? "rounded-t-full rounded-b-lg" : preferences.shape === "AlphaOmega" ? "rounded-[40%]" : "rounded-lg"}`} /> : <div className="flex size-40 items-center justify-center rounded-full border border-dashed border-primary/50"><Plus className="size-10 text-primary" /></div>}
-          <h1 className="mt-5 text-2xl font-bold">{robot ? botName : licensed ? "Choose your assistant" : "NEXTRAPRO"}</h1>
-          {licensed ? <span className="mt-3 rounded-full border border-primary/40 px-4 py-1 text-[11px] font-semibold text-primary">{running ? "Running" : robot ? (expires ? `Licence until ${new Date(expires).toLocaleDateString()}` : "Lifetime licence") : "Licence active"}</span> : <Button className="mt-4 h-11" onClick={() => go("activate")}><KeyRound />Activate licence</Button>}
+        <section className="flex flex-col items-center py-6 text-center">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">{robot ? "Licence activated" : licensed ? "No assistant installed" : "Licence not activated"}</span>
+          {robot ? <div className="relative mt-6"><span aria-hidden="true" className="absolute inset-0 -z-10 rounded-full bg-primary/30 blur-2xl" /><img src={customImage || botImg} alt="NEXTRAPRO activated assistant" className={`size-40 rounded-full border-2 border-primary object-cover shadow-[var(--trading-glow)] sm:size-44 ${preferences.animation ? "trading-background-motion" : ""}`} /></div> : <div className="flex size-40 items-center justify-center rounded-full border border-dashed border-primary/50"><Plus className="size-10 text-primary" /></div>}
+          <h1 className="mt-5 text-3xl font-bold">{robot ? botName : licensed ? "Choose your assistant" : "NEXTRAPRO"}</h1>
+          <p className="mt-2 text-xs text-muted-foreground">{robot ? (expires ? `Licence until ${new Date(expires).toLocaleDateString()}` : "Lifetime licence") : licensed ? "Install an assistant from the robot list." : "Activate your licence to install a bot."}</p>
+          {licensed ? <div className="mt-8 flex items-center justify-center gap-5">
+            <Button variant="ghost" disabled={!robot} aria-label="Remove assistant" className="size-16 flex-col gap-1 rounded-full border border-primary/40 text-[10px] text-muted-foreground" onClick={() => { setRobot(false); setRunning(false); }}><X /><span>Remove</span></Button>
+            <Button variant={running ? "default" : "ghost"} disabled={!robot} aria-label={running ? "Stop assistant" : "Start assistant"} className="size-20 flex-col gap-1 rounded-full border border-primary text-[10px] shadow-[var(--trading-glow)]" onClick={() => { setRunning(!running); if (!running) setNotice("Assistant enabled. Trade execution is unavailable until the live MT5 service is connected."); }}>{running ? <Square /> : <Play />}<span>{running ? "Stop" : "Start"}</span></Button>
+            <Button variant="ghost" disabled={!robot} aria-label="Symbols" className="size-16 flex-col gap-1 rounded-full border border-primary/40 text-[10px] text-muted-foreground" onClick={() => go("symbols")}><Activity /><span>Symbols</span></Button>
+          </div> : <Button className="mt-6 h-11" onClick={() => go("activate")}><KeyRound />Activate licence</Button>}
+          {running && <span className="mt-6 flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-[11px] font-semibold text-primary"><span className="size-2 rounded-full bg-success" />Running · {configs.length} symbols · MT5 disconnected</span>}
         </section>
-        <div className="my-6 grid grid-cols-3 overflow-hidden rounded-lg border border-primary/40 bg-secondary p-1">
-          <Button variant="ghost" disabled={!robot} onClick={() => { setRobot(false); setRunning(false); }}><X /><span>Remove</span></Button>
-          <Button variant={running ? "default" : "ghost"} disabled={licensed && !robot} onClick={() => { if (!licensed) { go("activate"); return; } setRunning(!running); if (!running) setNotice("Assistant enabled. Trade execution is unavailable until the live MT5 service is connected."); }}>{running ? <Square /> : <Play />}{running ? "Stop" : "Start"}</Button>
-          <Button variant="ghost" disabled={!robot} onClick={() => go("symbols")}><Activity />Symbols</Button>
-        </div>
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Robots list</h2>
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Robot list</h2>
         <div className="space-y-2">
           {licensed ? <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => { if (!robot) { setRobot(true); speak(); } else setNotice(`${botName} is selected.`); }}><img src={customImage || botImg} alt="" className="size-10 rounded-full object-cover" /><span className="flex-1 text-left"><span className="block font-semibold">{botName}</span><span className="block text-xs text-primary">{robot ? "Active licence" : "Available to install"}</span></span>{robot ? <Check className="text-primary" /> : <Plus />}</Button> : <p className="rounded-lg border border-primary/30 p-5 text-center text-sm text-muted-foreground">No robot activated</p>}
-          <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => go(licensed ? "scanner" : "activate")}><span className="flex size-10 items-center justify-center rounded-full border border-primary/30"><ScanLine className="text-primary" /></span><span className="flex-1 text-left"><span className="block font-semibold">Chart Scanner</span><span className="block text-xs text-primary">AI chart analysis · Demo</span></span><ChevronRight /></Button>
+          <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => go(licensed ? "scanner" : "activate")}><span className="flex size-10 items-center justify-center rounded-full border border-primary/30"><ScanLine className="text-primary" /></span><span className="flex-1 text-left"><span className="block font-semibold">AI Scanner</span><span className="block text-xs text-primary">Chart analysis · Demo</span></span><ChevronRight /></Button>
         </div>
-        {running && <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-success" />Assistant running · {configs.length} configured symbols · MT5 disconnected</div>}
       </>}
 
       {screen === "symbols" && <>
@@ -137,9 +136,9 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
       </>}
 
       {screen === "scanner" && <section className="mx-auto max-w-3xl">
-        <h1 className="text-center text-2xl font-bold">Chart Scanner</h1><p className="mt-2 text-center text-xs text-muted-foreground">Demo analysis · Not financial advice</p>
+        <h1 className="text-center text-2xl font-bold">AI Scanner</h1><p className="mt-2 text-center text-xs text-muted-foreground">Demo analysis · Not financial advice</p>
         <div className="my-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{["First Scalp", "Super Scalp", "Swing", "Day"].map(item => <Button key={item} variant={mode === item ? "default" : "outline"} onClick={() => { setMode(item); setResult(false); }}>{item}</Button>)}</div>
-        <input ref={upload} type="file" accept="image/*" className="hidden" aria-label="Upload chart" onChange={e => loadImage(e.target.files?.[0], "chart")} />
+        <input ref={upload} type="file" accept="image/*" className="hidden" aria-label="Upload chart" onChange={e => loadImage(e.target.files?.[0])} />
         {chart ? <div className="relative overflow-hidden rounded-lg border border-border"><img src={chart} alt="Uploaded trading chart" className="max-h-[420px] w-full object-contain" /></div> : <div className="flex h-60 flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-primary/40"><Upload className="size-8 text-primary" /><Button variant="outline" onClick={() => upload.current?.click()}>Upload chart</Button></div>}
         <div className="mt-4 flex flex-wrap gap-3">{chart && <Button variant="outline" onClick={() => upload.current?.click()}><Upload />Replace chart</Button>}<Button disabled={!chart || scanning} onClick={() => { setScanning(true); setResult(false); scanTimer.current = setTimeout(() => { setScanning(false); setResult(true); }, 900); }}><ScanLine />{scanning ? "Scanning…" : "Scan chart"}</Button></div>
         {result && <div role="status" className="mt-6 border-t border-border pt-5"><span className="text-xs font-bold uppercase text-primary">{mode} · Demo result</span><h2 className="mt-2 text-lg font-semibold">No confirmed setup</h2><p className="mt-2 text-sm text-muted-foreground">Live chart analysis is not connected. Entry, stop loss and take profit are unavailable; no trade levels have been invented.</p></div>}
@@ -152,15 +151,10 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
     <nav aria-label="App navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-20 grid-cols-3 items-center border-t border-primary/40 bg-background px-3 shadow-[var(--trading-nav-shadow)]">
       <Button variant="ghost" className={`mx-auto h-14 flex-col gap-1 text-[10px] ${screen === "meta" ? "text-primary" : "text-muted-foreground"}`} onClick={() => licensed ? go("meta") : go("activate")}><Activity />MetaTrader</Button>
       <Button variant="ghost" className="mx-auto size-16 flex-col gap-1 rounded-full border border-primary/40 text-[10px] text-primary" onClick={() => go("home")}><Home />Home</Button>
-      <Button variant="ghost" className="mx-auto h-14 flex-col gap-1 text-[10px] text-muted-foreground" onClick={() => setSettings(true)}><Settings />Settings</Button>
+      <Button variant="ghost" className={`mx-auto h-14 flex-col gap-1 text-[10px] ${screen === "scanner" ? "text-primary" : "text-muted-foreground"}`} onClick={() => go(licensed ? "scanner" : "activate")}><ScanLine />AI Scanner</Button>
     </nav>
 
     <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open) setEditing(null); }}><DialogContent style={customTheme} className={`${theme} w-[calc(100%-2rem)] max-w-sm rounded-lg border-primary/50`}><DialogTitle className="text-center">{editing?.symbol}</DialogTitle><DialogDescription>Symbol configuration</DialogDescription>{editing && <form className="space-y-4" onSubmit={e => { e.preventDefault(); setConfigs([...configs.filter(item => item.symbol !== editing.symbol), editing]); setEditing(null); setSymbolTab("selected"); }}><Field title="Lot size"><Input type="number" min="0.01" max="100" step="0.01" required value={editing.lot} onChange={e => setEditing({ ...editing, lot: e.target.value })} /></Field><Field title="Execution type"><Choice value={editing.execution} label="Execution type" options={["Both", "Buy only", "Sell only"]} onChange={execution => setEditing({ ...editing, execution })} /></Field><Field title="Number of trades"><Input type="number" min="1" max="100" step="1" required value={editing.trades} onChange={e => setEditing({ ...editing, trades: e.target.value })} /></Field><Button className="h-11 w-full" type="submit">Configure symbol</Button></form>}</DialogContent></Dialog>
     <Dialog open={adding} onOpenChange={setAdding}><DialogContent style={customTheme} className={`${theme} w-[calc(100%-2rem)] max-w-sm rounded-lg`}><DialogTitle>Add symbol</DialogTitle><DialogDescription>Broker symbol name</DialogDescription><form className="space-y-4" onSubmit={e => { e.preventDefault(); const symbol = newSymbol.trim().toUpperCase(); if (!symbol) return; if (!allowed.includes(symbol)) setAllowed([...allowed, symbol]); setNewSymbol(""); setAdding(false); }}><Input aria-label="Symbol name" required pattern="[A-Za-z0-9._-]{2,20}" placeholder="e.g. AUDUSD" value={newSymbol} onChange={e => setNewSymbol(e.target.value)} /><Button type="submit" className="w-full"><Plus />Add symbol</Button></form></DialogContent></Dialog>
-    <Dialog open={settings} onOpenChange={setSettings}><DialogContent style={customTheme} className={`${theme} inset-y-0 left-auto right-0 flex h-dvh w-[min(360px,100%)] max-w-none translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none border-l border-primary/30 pt-9`}><DialogTitle>NEXTRAPRO</DialogTitle><DialogDescription>Configuration</DialogDescription>
-      <input type="file" ref={imageUpload} className="hidden" accept="image/*" aria-label="Assistant image" onChange={e => loadImage(e.target.files?.[0], "bot")} />
-      <TradingConfiguration preferences={preferences} onChange={setPreferences} robotImage={robotPicture} licensed={licensed} onUpload={() => imageUpload.current?.click()} onRestore={() => setCustomImage("")} onScanner={() => go(licensed ? "scanner" : "activate")} onLiveChart={() => go(licensed ? "livechart" : "activate")} onSpeak={() => speak()} notifications={notifications} onNotifications={setNotifications} voice={voice} onVoice={setVoice} />
-      <Button variant="outline" onClick={onExit}><ArrowLeft />Return to website</Button>
-    </DialogContent></Dialog>
   </div>;
 }

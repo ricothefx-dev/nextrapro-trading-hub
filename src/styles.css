@@ -241,7 +241,7 @@
 .trading-font-fredoka { font-family: "Fredoka", sans-serif; }
 .trading-mode-zen-x { --secondary: oklch(0.91 0.02 150); }
 .trading-mode-the-lumo { --secondary: oklch(0.92 0.04 95); }
-.trading-mode-edge-2.0 { --radius: 2px; }
+.trading-mode-edge-2\.0 { --radius: 2px; }
 .trading-mode-the-eto { --radius: 0px; }
 .trading-mode-ost-mode { --secondary: oklch(0.91 0.04 328); }
 .trading-mode-sztone { --secondary: oklch(0.88 0.01 250); }
