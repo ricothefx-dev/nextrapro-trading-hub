@@ -1,12 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
-import { Activity, ArrowLeft, ArrowRight, Bell, Check, ChevronRight, Home, KeyRound, Play, Plus, ScanLine, Settings, ShieldCheck, Square, Trash2, Upload, Volume2, X, Zap } from "lucide-react";
+import { Activity, ArrowLeft, ArrowRight, Bell, Check, ChevronRight, Home, KeyRound, Play, Plus, ScanLine, Settings, ShieldCheck, Square, Trash2, Upload, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TradingConfiguration, defaultInterface, type InterfacePreferences } from "@/components/trading-configuration";
+type InterfacePreferences = { mode: string; shape: string; font: string; color: string; shade: string; background: boolean; animation: boolean; imageMode: string };
+const defaultInterface: InterfacePreferences = { mode: "Beast Mode", shape: "The Oracle", font: "Regular", color: "orange", shade: "#ff6a00", background: true, animation: false, imageMode: "Robot picture" };
 import { TradingMetaConnect } from "@/components/trading-meta-connect";
 
 type Screen = "start" | "activate" | "home" | "symbols" | "scanner" | "meta" | "livechart";
@@ -26,7 +27,6 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const [running, setRunning] = useState(false);
   const [key, setKey] = useState("");
   const [notice, setNotice] = useState("");
-  const [settings, setSettings] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [voice, setVoice] = useState(true);
   const [preferences, setPreferences] = useState<InterfacePreferences>(defaultInterface);
@@ -47,7 +47,6 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const [botImg, setBotImg] = useState("");
   const [expires, setExpires] = useState<string | null>(null);
   const upload = useRef<HTMLInputElement>(null);
-  const imageUpload = useRef<HTMLInputElement>(null);
   const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (scanTimer.current) clearTimeout(scanTimer.current); }, []);
   useEffect(() => {
@@ -58,8 +57,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const dark = ["Beast Mode", "The MCP", "Old School", "The VTX"].includes(preferences.mode);
   const theme = `trading-theme ${dark ? "trading-dark" : ""} trading-${preferences.color} trading-font-${preferences.font.toLowerCase().replaceAll(" ", "-")} trading-mode-${preferences.mode.toLowerCase().replaceAll(" ", "-")}`;
   const robotPicture = licensed && robot ? customImage || botImg : "";
-  const customTheme = preferences.color === "custom" ? { "--primary": preferences.shade, "--ring": preferences.shade } as CSSProperties : undefined;
-  const go = (next: Screen) => { setNotice(""); setScreen(next); setSettings(false); };
+  const go = (next: Screen) => { setNotice(""); setScreen(next); };
   const speak = (name = botName) => { if (voice && "speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(`${name} activated`)); };
   const activate = async (raw: string, silent = false) => {
     const k = raw.trim().toUpperCase();
@@ -80,12 +78,12 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
     if (!silent) { go("home"); speak(row.bot_name); }
   };
   useEffect(() => { const saved = localStorage.getItem("nextrapro-licence"); if (saved) void activate(saved, true); }, []);
-  const loadImage = (file: File | undefined, target: "chart" | "bot") => {
+  const loadImage = (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) { setNotice("Please choose an image file."); return; }
     if (file.size > 10 * 1024 * 1024) { setNotice("Choose an image smaller than 10 MB."); return; }
     const reader = new FileReader();
-    reader.onload = () => { if (typeof reader.result !== "string") return; if (target === "chart") { setChart(reader.result); setResult(false); } else setCustomImage(reader.result); setNotice(""); };
+    reader.onload = () => { if (typeof reader.result !== "string") return; setChart(reader.result); setResult(false); setNotice(""); };
     reader.readAsDataURL(file);
   };
   return <div style={customTheme} className={`${theme} relative isolate min-h-screen bg-background text-foreground`}>
