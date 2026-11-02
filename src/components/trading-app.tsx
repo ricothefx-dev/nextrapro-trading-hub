@@ -51,12 +51,17 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (scanTimer.current) clearTimeout(scanTimer.current); }, []);
   useEffect(() => {
-    try { const saved = localStorage.getItem("nextrapro-interface"); if (saved) setPreferences({ ...defaultInterface, ...JSON.parse(saved) }); } catch { /* Use defaults when storage is invalid. */ }
+    try {
+      const saved = localStorage.getItem("nextrapro-interface"); if (saved) setPreferences({ ...defaultInterface, ...JSON.parse(saved) });
+      const account = localStorage.getItem("nextrapro-account"); if (account) setProfile(JSON.parse(account));
+      const picture = localStorage.getItem("nextrapro-robot-image"); if (picture) setCustomImage(picture);
+    } catch { /* Use defaults when storage is invalid. */ }
     setPreferencesReady(true);
   }, []);
   useEffect(() => { if (preferencesReady) localStorage.setItem("nextrapro-interface", JSON.stringify(preferences)); }, [preferences, preferencesReady]);
   const dark = ["Beast Mode", "The MCP", "Old School", "The VTX"].includes(preferences.mode);
   const theme = `trading-theme ${dark ? "trading-dark" : ""} trading-${preferences.color} trading-font-${preferences.font.toLowerCase().replaceAll(" ", "-")} trading-mode-${preferences.mode.toLowerCase().replaceAll(" ", "-")}`;
+  const shape = shapeClassFor(preferences.shape);
   const robotPicture = licensed && robot ? customImage || botImg : "";
   const customTheme = preferences.color === "custom" ? { "--primary": preferences.shade, "--ring": preferences.shade } as CSSProperties : undefined;
   const go = (next: Screen) => { setNotice(""); setScreen(next); };
