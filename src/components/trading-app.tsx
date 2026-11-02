@@ -93,12 +93,24 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
     reader.onload = () => { if (typeof reader.result !== "string") return; setChart(reader.result); setResult(false); setNotice(""); };
     reader.readAsDataURL(file);
   };
+  const saveCustomImage = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setNotice("Please choose an image file."); return; }
+    if (file.size > 10 * 1024 * 1024) { setNotice("Choose an image smaller than 10 MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result !== "string") return; setCustomImage(reader.result); try { localStorage.setItem("nextrapro-robot-image", reader.result); } catch { /* Picture stays for this session only. */ } setPreferences({ ...preferences, imageMode: "Custom picture" }); setNotice(""); };
+    reader.readAsDataURL(file);
+  };
+  const clearCustomImage = () => { setCustomImage(""); localStorage.removeItem("nextrapro-robot-image"); setPreferences({ ...preferences, imageMode: "Robot picture" }); };
   return <div style={customTheme} className={`${theme} relative isolate min-h-screen bg-background text-foreground`}>
-    {screen === "home" && robotPicture && preferences.background && preferences.imageMode === "Robot picture" && <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true"><img src={robotPicture} alt="" className={`size-full object-cover ${preferences.animation ? "trading-background-motion" : ""}`} /><div className="absolute inset-0 bg-background/80" /></div>}
+    {screen === "home" && robotPicture && preferences.background && preferences.imageMode !== "No picture" && <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true"><img src={robotPicture} alt="" className={`size-full object-cover ${preferences.animation ? "trading-background-motion" : ""}`} /><div className="absolute inset-0 bg-background/80" /></div>}
     <header className="flex h-16 items-center justify-between border-b border-border bg-background/85 px-4 sm:px-8">
       <Button size="icon" variant="ghost" aria-label={screen === "start" || screen === "home" ? "Back to website" : "Back to app home"} onClick={() => screen === "start" || screen === "home" ? onExit() : go("home")}><ArrowLeft /></Button>
       <span className="flex items-center gap-2 text-sm font-bold"><Zap className="size-4 text-primary" />NEXTRA<span className="text-primary">PRO</span></span>
-      <Button size="icon" variant="ghost" aria-label="Notifications" onClick={() => setNotice(notifications ? "No new notifications." : "Notifications are turned off.")}><Bell /></Button>
+      <div className="flex items-center">
+        <Button size="icon" variant="ghost" aria-label="Settings" onClick={() => setSettingsOpen(true)}><Settings /></Button>
+        <Button size="icon" variant="ghost" aria-label="Notifications" onClick={() => setNotice(notifications ? "No new notifications." : "Notifications are turned off.")}><Bell /></Button>
+      </div>
     </header>
     <main className="mx-auto min-h-[calc(100dvh-144px)] max-w-6xl px-4 pb-28 pt-6 sm:px-8">
       {notice && <div role="status" className="mb-5 flex items-center gap-3 rounded-md border border-primary/30 bg-primary/10 px-4 py-3 text-sm"><span className="flex-1">{notice}</span><Button variant="ghost" size="icon" aria-label="Dismiss notice" onClick={() => setNotice("")}><X /></Button></div>}
