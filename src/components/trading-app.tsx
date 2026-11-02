@@ -124,7 +124,39 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
           <p className="text-xs text-muted-foreground">Paste the key your mentor sent you.</p>
           <Button type="submit" disabled={activating} className="h-12 w-full"><ShieldCheck />{activating ? "Checking…" : "Activate licence"}</Button>
         </form>}
-        
+        {screen === "start" && <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
+          <Button variant="link" className="h-auto p-0 text-primary" onClick={() => { setAccountTab("signin"); go("account"); }}>Sign in</Button>
+          <span className="text-muted-foreground">·</span>
+          <Button variant="link" className="h-auto p-0 text-primary" onClick={() => { setAccountTab("register"); go("account"); }}>Create account</Button>
+          <span className="text-muted-foreground">·</span>
+          <Button variant="link" className="h-auto p-0 text-muted-foreground" onClick={() => { setAccountTab("reset"); go("account"); }}>Forgot password?</Button>
+        </div>}
+      </section>}
+
+      {screen === "account" && <section className="mx-auto flex max-w-md flex-col items-center pt-10 text-center sm:pt-16">
+        <div className="mb-7 flex size-24 items-center justify-center rounded-full border border-primary/40 bg-primary/10"><ShieldCheck className="size-9 text-primary" /></div>
+        <span className="text-xs font-semibold uppercase tracking-widest text-primary">Trading assistant</span>
+        <h1 className="mt-3 text-3xl font-bold">{accountTab === "signin" ? "Sign in" : accountTab === "register" ? "Create account" : "Reset password"}</h1>
+        <p className="mt-4 text-sm text-muted-foreground">{accountTab === "reset" ? "We will send a reset link to your email." : "Your account is kept on this device until live accounts are connected."}</p>
+        <div role="tablist" aria-label="Account options" className="mt-6 grid w-full grid-cols-3 gap-1 rounded-full border border-primary/40 p-1">
+          {(["signin", "register", "reset"] as const).map(tab => <Button key={tab} role="tab" aria-selected={accountTab === tab} variant={accountTab === tab ? "default" : "ghost"} className="rounded-full text-xs" onClick={() => setAccountTab(tab)}>{tab === "signin" ? "Sign in" : tab === "register" ? "Register" : "Reset"}</Button>)}
+        </div>
+        {accountTab === "signin" && <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const email = String(data.get("email")); const next = { name: email.split("@")[0], email }; setProfile(next); try { localStorage.setItem("nextrapro-account", JSON.stringify(next)); } catch { /* Profile stays for this session only. */ } setNotice(`Signed in as ${email}.`); go("home"); }}>
+          <Field title="Email"><Input name="email" type="email" required placeholder="you@example.com" className="h-12" /></Field>
+          <Field title="Password"><Input name="password" type="password" required minLength={8} placeholder="••••••••" className="h-12" /></Field>
+          <Button type="submit" className="h-12 w-full"><ShieldCheck />Sign in</Button>
+        </form>}
+        {accountTab === "register" && <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const next = { name: String(data.get("name")), email: String(data.get("email")) }; setProfile(next); try { localStorage.setItem("nextrapro-account", JSON.stringify(next)); } catch { /* Profile stays for this session only. */ } setNotice(`Welcome, ${next.name}. Your account is saved on this device.`); go("home"); }}>
+          <Field title="Name"><Input name="name" required placeholder="Your name" className="h-12" /></Field>
+          <Field title="Email"><Input name="email" type="email" required placeholder="you@example.com" className="h-12" /></Field>
+          <Field title="Password"><Input name="password" type="password" required minLength={8} placeholder="At least 8 characters" className="h-12" /></Field>
+          <Button type="submit" className="h-12 w-full"><ShieldCheck />Create account</Button>
+        </form>}
+        {accountTab === "reset" && <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); setNotice("Password reset is unavailable until the email service is connected. Your password was not sent anywhere."); go("start"); }}>
+          <Field title="Email"><Input name="email" type="email" required placeholder="you@example.com" className="h-12" /></Field>
+          <Button type="submit" className="h-12 w-full"><ShieldCheck />Send reset link</Button>
+        </form>}
+        {profile && accountTab !== "reset" && <p className="mt-6 text-xs text-muted-foreground">Signed in as {profile.email}</p>}
       </section>}
 
       {screen === "home" && <>
