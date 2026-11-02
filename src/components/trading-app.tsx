@@ -6,11 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-type InterfacePreferences = { mode: string; shape: string; font: string; color: string; shade: string; background: boolean; animation: boolean; imageMode: string };
-const defaultInterface: InterfacePreferences = { mode: "Beast Mode", shape: "The Oracle", font: "Regular", color: "orange", shade: "#ff6a00", background: true, animation: false, imageMode: "Robot picture" };
 import { TradingMetaConnect } from "@/components/trading-meta-connect";
-
-type Screen = "start" | "activate" | "home" | "symbols" | "scanner" | "meta" | "livechart";
+import { TradingConfiguration, defaultInterface, shapeClassFor, type InterfacePreferences } from "@/components/trading-configuration";
+type Screen = "start" | "activate" | "account" | "home" | "symbols" | "scanner" | "meta" | "livechart";
 type SymbolConfig = { symbol: string; lot: string; execution: string; trades: string };
 const initialSymbols = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "US30", "NAS100", "BTCUSD", "ETHUSD"];
 function Choice({ value, onChange, options, label }: { value: string; onChange: (value: string) => void; options: string[]; label: string }) {
@@ -22,6 +20,9 @@ function Field({ title, children }: { title: string; children: ReactNode }) {
 
 export function TradingApp({ onExit }: { onExit: () => void }) {
   const [screen, setScreen] = useState<Screen>("home");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [accountTab, setAccountTab] = useState<"signin" | "register" | "reset">("signin");
+  const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
   const [licensed, setLicensed] = useState(false);
   const [robot, setRobot] = useState(false);
   const [running, setRunning] = useState(false);
