@@ -6,11 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-type InterfacePreferences = { mode: string; shape: string; font: string; color: string; shade: string; background: boolean; animation: boolean; imageMode: string };
-const defaultInterface: InterfacePreferences = { mode: "Beast Mode", shape: "The Oracle", font: "Regular", color: "orange", shade: "#ff6a00", background: true, animation: false, imageMode: "Robot picture" };
 import { TradingMetaConnect } from "@/components/trading-meta-connect";
-
-type Screen = "start" | "activate" | "home" | "symbols" | "scanner" | "meta" | "livechart";
+import { TradingConfiguration, defaultInterface, shapeClassFor, type InterfacePreferences } from "@/components/trading-configuration";
+type Screen = "start" | "activate" | "account" | "home" | "symbols" | "scanner" | "meta" | "livechart";
 type SymbolConfig = { symbol: string; lot: string; execution: string; trades: string };
 const initialSymbols = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "US30", "NAS100", "BTCUSD", "ETHUSD"];
 function Choice({ value, onChange, options, label }: { value: string; onChange: (value: string) => void; options: string[]; label: string }) {
@@ -22,6 +20,9 @@ function Field({ title, children }: { title: string; children: ReactNode }) {
 
 export function TradingApp({ onExit }: { onExit: () => void }) {
   const [screen, setScreen] = useState<Screen>("home");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [accountTab, setAccountTab] = useState<"signin" | "register" | "reset">("signin");
+  const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
   const [licensed, setLicensed] = useState(false);
   const [robot, setRobot] = useState(false);
   const [running, setRunning] = useState(false);
@@ -50,12 +51,17 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
   const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (scanTimer.current) clearTimeout(scanTimer.current); }, []);
   useEffect(() => {
-    try { const saved = localStorage.getItem("nextrapro-interface"); if (saved) setPreferences({ ...defaultInterface, ...JSON.parse(saved) }); } catch { /* Use defaults when storage is invalid. */ }
+    try {
+      const saved = localStorage.getItem("nextrapro-interface"); if (saved) setPreferences({ ...defaultInterface, ...JSON.parse(saved) });
+      const account = localStorage.getItem("nextrapro-account"); if (account) setProfile(JSON.parse(account));
+      const picture = localStorage.getItem("nextrapro-robot-image"); if (picture) setCustomImage(picture);
+    } catch { /* Use defaults when storage is invalid. */ }
     setPreferencesReady(true);
   }, []);
   useEffect(() => { if (preferencesReady) localStorage.setItem("nextrapro-interface", JSON.stringify(preferences)); }, [preferences, preferencesReady]);
   const dark = ["Beast Mode", "The MCP", "Old School", "The VTX"].includes(preferences.mode);
   const theme = `trading-theme ${dark ? "trading-dark" : ""} trading-${preferences.color} trading-font-${preferences.font.toLowerCase().replaceAll(" ", "-")} trading-mode-${preferences.mode.toLowerCase().replaceAll(" ", "-")}`;
+  const shape = shapeClassFor(preferences.shape);
   const robotPicture = licensed && robot ? customImage || botImg : "";
   const customTheme = preferences.color === "custom" ? { "--primary": preferences.shade, "--ring": preferences.shade } as CSSProperties : undefined;
   const go = (next: Screen) => { setNotice(""); setScreen(next); };
@@ -87,12 +93,24 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
     reader.onload = () => { if (typeof reader.result !== "string") return; setChart(reader.result); setResult(false); setNotice(""); };
     reader.readAsDataURL(file);
   };
+  const saveCustomImage = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setNotice("Please choose an image file."); return; }
+    if (file.size > 10 * 1024 * 1024) { setNotice("Choose an image smaller than 10 MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result !== "string") return; setCustomImage(reader.result); try { localStorage.setItem("nextrapro-robot-image", reader.result); } catch { /* Picture stays for this session only. */ } setPreferences({ ...preferences, imageMode: "Custom picture" }); setNotice(""); };
+    reader.readAsDataURL(file);
+  };
+  const clearCustomImage = () => { setCustomImage(""); localStorage.removeItem("nextrapro-robot-image"); setPreferences({ ...preferences, imageMode: "Robot picture" }); };
   return <div style={customTheme} className={`${theme} relative isolate min-h-screen bg-background text-foreground`}>
-    {screen === "home" && robotPicture && preferences.background && preferences.imageMode === "Robot picture" && <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true"><img src={robotPicture} alt="" className={`size-full object-cover ${preferences.animation ? "trading-background-motion" : ""}`} /><div className="absolute inset-0 bg-background/80" /></div>}
+    {screen === "home" && robotPicture && preferences.background && preferences.imageMode !== "No picture" && <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true"><img src={robotPicture} alt="" className={`size-full object-cover ${preferences.animation ? "trading-background-motion" : ""}`} /><div className="absolute inset-0 bg-background/80" /></div>}
     <header className="flex h-16 items-center justify-between border-b border-border bg-background/85 px-4 sm:px-8">
       <Button size="icon" variant="ghost" aria-label={screen === "start" || screen === "home" ? "Back to website" : "Back to app home"} onClick={() => screen === "start" || screen === "home" ? onExit() : go("home")}><ArrowLeft /></Button>
       <span className="flex items-center gap-2 text-sm font-bold"><Zap className="size-4 text-primary" />NEXTRA<span className="text-primary">PRO</span></span>
-      <Button size="icon" variant="ghost" aria-label="Notifications" onClick={() => setNotice(notifications ? "No new notifications." : "Notifications are turned off.")}><Bell /></Button>
+      <div className="flex items-center">
+        <Button size="icon" variant="ghost" aria-label="Settings" onClick={() => setSettingsOpen(true)}><Settings /></Button>
+        <Button size="icon" variant="ghost" aria-label="Notifications" onClick={() => setNotice(notifications ? "No new notifications." : "Notifications are turned off.")}><Bell /></Button>
+      </div>
     </header>
     <main className="mx-auto min-h-[calc(100dvh-144px)] max-w-6xl px-4 pb-28 pt-6 sm:px-8">
       {notice && <div role="status" className="mb-5 flex items-center gap-3 rounded-md border border-primary/30 bg-primary/10 px-4 py-3 text-sm"><span className="flex-1">{notice}</span><Button variant="ghost" size="icon" aria-label="Dismiss notice" onClick={() => setNotice("")}><X /></Button></div>}
@@ -106,13 +124,46 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
           <p className="text-xs text-muted-foreground">Paste the key your mentor sent you.</p>
           <Button type="submit" disabled={activating} className="h-12 w-full"><ShieldCheck />{activating ? "Checking…" : "Activate licence"}</Button>
         </form>}
-        
+        {(screen === "start" || screen === "activate") && <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
+          {(screen === "start" || screen === "activate") && <>
+          <Button variant="link" className="h-auto p-0 text-primary" onClick={() => { setAccountTab("signin"); go("account"); }}>Sign in</Button>
+          <span className="text-muted-foreground">·</span>
+          <Button variant="link" className="h-auto p-0 text-primary" onClick={() => { setAccountTab("register"); go("account"); }}>Create account</Button>
+          <span className="text-muted-foreground">·</span>
+          <Button variant="link" className="h-auto p-0 text-muted-foreground" onClick={() => { setAccountTab("reset"); go("account"); }}>Forgot password?</Button>
+        </div>}
+      </section>}
+
+      {screen === "account" && <section className="mx-auto flex max-w-md flex-col items-center pt-10 text-center sm:pt-16">
+        <div className="mb-7 flex size-24 items-center justify-center rounded-full border border-primary/40 bg-primary/10"><ShieldCheck className="size-9 text-primary" /></div>
+        <span className="text-xs font-semibold uppercase tracking-widest text-primary">Trading assistant</span>
+        <h1 className="mt-3 text-3xl font-bold">{accountTab === "signin" ? "Sign in" : accountTab === "register" ? "Create account" : "Reset password"}</h1>
+        <p className="mt-4 text-sm text-muted-foreground">{accountTab === "reset" ? "We will send a reset link to your email." : "Your account is kept on this device until live accounts are connected."}</p>
+        <div role="tablist" aria-label="Account options" className="mt-6 grid w-full grid-cols-3 gap-1 rounded-full border border-primary/40 p-1">
+          {(["signin", "register", "reset"] as const).map(tab => <Button key={tab} role="tab" aria-selected={accountTab === tab} variant={accountTab === tab ? "default" : "ghost"} className="rounded-full text-xs" onClick={() => setAccountTab(tab)}>{tab === "signin" ? "Sign in" : tab === "register" ? "Register" : "Reset"}</Button>)}
+        </div>
+        {accountTab === "signin" && <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const email = String(data.get("email")); const next = { name: email.split("@")[0], email }; setProfile(next); try { localStorage.setItem("nextrapro-account", JSON.stringify(next)); } catch { /* Profile stays for this session only. */ } setNotice(`Signed in as ${email}.`); go("home"); }}>
+          <Field title="Email"><Input name="email" type="email" required placeholder="you@example.com" className="h-12" /></Field>
+          <Field title="Password"><Input name="password" type="password" required minLength={8} placeholder="••••••••" className="h-12" /></Field>
+          <Button type="submit" className="h-12 w-full"><ShieldCheck />Sign in</Button>
+        </form>}
+        {accountTab === "register" && <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const next = { name: String(data.get("name")), email: String(data.get("email")) }; setProfile(next); try { localStorage.setItem("nextrapro-account", JSON.stringify(next)); } catch { /* Profile stays for this session only. */ } setNotice(`Welcome, ${next.name}. Your account is saved on this device.`); go("home"); }}>
+          <Field title="Name"><Input name="name" required placeholder="Your name" className="h-12" /></Field>
+          <Field title="Email"><Input name="email" type="email" required placeholder="you@example.com" className="h-12" /></Field>
+          <Field title="Password"><Input name="password" type="password" required minLength={8} placeholder="At least 8 characters" className="h-12" /></Field>
+          <Button type="submit" className="h-12 w-full"><ShieldCheck />Create account</Button>
+        </form>}
+        {accountTab === "reset" && <form className="mt-8 w-full space-y-4 text-left" onSubmit={e => { e.preventDefault(); setNotice("Password reset is unavailable until the email service is connected. Your password was not sent anywhere."); go("start"); }}>
+          <Field title="Email"><Input name="email" type="email" required placeholder="you@example.com" className="h-12" /></Field>
+          <Button type="submit" className="h-12 w-full"><ShieldCheck />Send reset link</Button>
+        </form>}
+        {profile && accountTab !== "reset" && <p className="mt-6 text-xs text-muted-foreground">Signed in as {profile.email}</p>}
       </section>}
 
       {screen === "home" && <>
         <section className="flex flex-col items-center py-6 text-center">
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">{robot ? "Licence activated" : licensed ? "No assistant installed" : "Licence not activated"}</span>
-          {robot ? <div className="relative mt-6"><span aria-hidden="true" className="absolute inset-0 -z-10 rounded-full bg-primary/30 blur-2xl" /><img src={customImage || botImg} alt="NEXTRAPRO activated assistant" className={`size-40 rounded-full border-2 border-primary object-cover shadow-[var(--trading-glow)] sm:size-44 ${preferences.animation ? "trading-background-motion" : ""}`} /></div> : <div className="flex size-40 items-center justify-center rounded-full border border-dashed border-primary/50"><Plus className="size-10 text-primary" /></div>}
+          {robot ? <div className="relative mt-6"><span aria-hidden="true" className={`absolute inset-0 -z-10 ${shape} bg-primary/30 blur-2xl`} /><img src={customImage || botImg} alt="NEXTRAPRO activated assistant" className={`size-40 ${shape} border-2 border-primary object-cover shadow-[var(--trading-glow)] sm:size-44 ${preferences.animation ? "trading-background-motion" : ""}`} /></div> : <div className="flex size-40 items-center justify-center rounded-full border border-dashed border-primary/50"><Plus className="size-10 text-primary" /></div>}
           <h1 className="mt-5 text-3xl font-bold">{robot ? botName : licensed ? "Choose your assistant" : "NEXTRAPRO"}</h1>
           <p className="mt-2 text-xs text-muted-foreground">{robot ? (expires ? `Licence until ${new Date(expires).toLocaleDateString()}` : "Lifetime licence") : licensed ? "Install an assistant from the robot list." : "Activate your licence to install a bot."}</p>
           {licensed ? <div className="mt-8 flex items-center justify-center gap-5">
@@ -124,7 +175,7 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
         </section>
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Robot list</h2>
         <div className="space-y-2">
-          {licensed ? <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => { if (!robot) { setRobot(true); speak(); } else setNotice(`${botName} is selected.`); }}><img src={customImage || botImg} alt="" className="size-10 rounded-full object-cover" /><span className="flex-1 text-left"><span className="block font-semibold">{botName}</span><span className="block text-xs text-primary">{robot ? "Active licence" : "Available to install"}</span></span>{robot ? <Check className="text-primary" /> : <Plus />}</Button> : <p className="rounded-lg border border-primary/30 p-5 text-center text-sm text-muted-foreground">No robot activated</p>}
+          {licensed ? <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => { if (!robot) { setRobot(true); speak(); } else setNotice(`${botName} is selected.`); }}><img src={customImage || botImg} alt="" className={`size-10 ${shape} object-cover`} /><span className="flex-1 text-left"><span className="block font-semibold">{botName}</span><span className="block text-xs text-primary">{robot ? "Active licence" : "Available to install"}</span></span>{robot ? <Check className="text-primary" /> : <Plus />}</Button> : <p className="rounded-lg border border-primary/30 p-5 text-center text-sm text-muted-foreground">No robot activated</p>}
           <Button variant="outline" className="h-16 w-full justify-start rounded-lg border-primary/40 px-4" onClick={() => go(licensed ? "scanner" : "activate")}><span className="flex size-10 items-center justify-center rounded-full border border-primary/30"><ScanLine className="text-primary" /></span><span className="flex-1 text-left"><span className="block font-semibold">AI Scanner</span><span className="block text-xs text-primary">Chart analysis · Demo</span></span><ChevronRight /></Button>
         </div>
       </>}
@@ -147,6 +198,8 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
       {screen === "meta" && <TradingMetaConnect />}
       {screen === "livechart" && <section className="mx-auto max-w-4xl"><h1 className="text-center text-2xl font-bold">Live chart</h1><p className="mt-4 text-center text-sm text-muted-foreground">Live market feed is not connected.</p>{chart && <img src={chart} alt="Previously uploaded chart — not live" className="mt-6 w-full object-contain" />}<Button variant="outline" className="mt-6" onClick={() => go("scanner")}><ScanLine />Chart Scanner</Button></section>}
     </main>
+
+    <TradingConfiguration open={settingsOpen} onOpenChange={setSettingsOpen} preferences={preferences} onPreferences={setPreferences} notifications={notifications} onNotifications={setNotifications} voice={voice} onVoice={setVoice} customImage={customImage} onCustomImage={saveCustomImage} onClearCustomImage={clearCustomImage} />
 
     <nav aria-label="App navigation" className="fixed inset-x-0 bottom-0 z-30 grid h-20 grid-cols-3 items-center border-t border-primary/40 bg-background px-3 shadow-[var(--trading-nav-shadow)]">
       <Button variant="ghost" className={`mx-auto h-14 flex-col gap-1 text-[10px] ${screen === "meta" ? "text-primary" : "text-muted-foreground"}`} onClick={() => licensed ? go("meta") : go("activate")}><Activity />MetaTrader</Button>

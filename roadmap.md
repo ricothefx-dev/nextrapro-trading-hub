@@ -5,4 +5,6 @@
 - [x] Add screenshot-based configuration controls and activated robot background/sidebar.
 - [x] Match the supplied MT5 account layout without claiming a live connection.
 - [x] Restyle home like the Ghost Rider reference (round glowing bot, Remove/Start/Symbols circles) and replace the Settings tab with AI Scanner.
+- [x] Restore the interface settings slide-over (gear icon) with custom robot picture, shapes, fonts, colours and modes.
+- [x] Add the app account screens (Sign in / Register / Reset) from the app structure.
 - [ ] Verify the updated app views in the browser.
