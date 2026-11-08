@@ -15,6 +15,13 @@
       "when": 1791579017100,
       "tag": "0001_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794112079164,
+      "tag": "0002_prepare_mt5_copy_trading_tables",
+      "breakpoints": true
     }
   ]
 }

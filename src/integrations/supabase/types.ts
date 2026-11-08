@@ -41,6 +41,42 @@ export type Database = {
         }
         Relationships: []
       }
+      client_mt5_connections: {
+        Row: {
+          broker_name: string | null
+          client_id: string
+          connection_status: string
+          created_at: string
+          id: string
+          last_heartbeat: string | null
+          mt5_account_number: string | null
+          unique_connection_code: string
+          updated_at: string
+        }
+        Insert: {
+          broker_name?: string | null
+          client_id: string
+          connection_status?: string
+          created_at?: string
+          id?: string
+          last_heartbeat?: string | null
+          mt5_account_number?: string | null
+          unique_connection_code?: string
+          updated_at?: string
+        }
+        Update: {
+          broker_name?: string | null
+          client_id?: string
+          connection_status?: string
+          created_at?: string
+          id?: string
+          last_heartbeat?: string | null
+          mt5_account_number?: string | null
+          unique_connection_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       licences: {
         Row: {
           activated_at: string | null
@@ -97,6 +133,33 @@ export type Database = {
           },
         ]
       }
+      provider_accounts: {
+        Row: {
+          connection_status: string
+          created_at: string
+          provider_id: string
+          provider_name: string
+          unique_ea_code: string
+          updated_at: string
+        }
+        Insert: {
+          connection_status?: string
+          created_at?: string
+          provider_id: string
+          provider_name: string
+          unique_ea_code?: string
+          updated_at?: string
+        }
+        Update: {
+          connection_status?: string
+          created_at?: string
+          provider_id?: string
+          provider_name?: string
+          unique_ea_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       signals: {
         Row: {
           action: string
@@ -150,6 +213,142 @@ export type Database = {
           },
         ]
       }
+      trade_executions: {
+        Row: {
+          client_id: string
+          client_ticket: number | null
+          created_at: string
+          error_message: string | null
+          execution_status: string
+          execution_timestamp: string | null
+          id: string
+          signal_id: number
+        }
+        Insert: {
+          client_id: string
+          client_ticket?: number | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          execution_timestamp?: string | null
+          id?: string
+          signal_id: number
+        }
+        Update: {
+          client_id?: string
+          client_ticket?: number | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          execution_timestamp?: string | null
+          id?: string
+          signal_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_executions_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "trade_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_signals: {
+        Row: {
+          action: string
+          created_at: string
+          direction: string
+          entry_price: number | null
+          id: number
+          lot_size: number
+          master_ticket: number
+          provider_id: string
+          stop_loss: number | null
+          symbol: string
+          take_profit: number | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          direction: string
+          entry_price?: number | null
+          id?: number
+          lot_size: number
+          master_ticket: number
+          provider_id: string
+          stop_loss?: number | null
+          symbol: string
+          take_profit?: number | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          direction?: string
+          entry_price?: number | null
+          id?: number
+          lot_size?: number
+          master_ticket?: number
+          provider_id?: string
+          stop_loss?: number | null
+          symbol?: string
+          take_profit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_signals_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_accounts"
+            referencedColumns: ["provider_id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -162,6 +361,13 @@ export type Database = {
           bot_name: string
           expires_at: string
         }[]
+      }
+      has_app_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       licence_copy_status: {
         Args: { _key: string }
@@ -185,7 +391,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "provider" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -312,6 +518,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "provider", "client"],
+    },
   },
 } as const

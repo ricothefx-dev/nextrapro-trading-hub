@@ -124,14 +124,13 @@ export function TradingApp({ onExit }: { onExit: () => void }) {
           <p className="text-xs text-muted-foreground">Paste the key your mentor sent you.</p>
           <Button type="submit" disabled={activating} className="h-12 w-full"><ShieldCheck />{activating ? "Checking…" : "Activate licence"}</Button>
         </form>}
-        {(screen === "start" || screen === "activate") && <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
-          {(screen === "start" || screen === "activate") && <>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
           <Button variant="link" className="h-auto p-0 text-primary" onClick={() => { setAccountTab("signin"); go("account"); }}>Sign in</Button>
           <span className="text-muted-foreground">·</span>
           <Button variant="link" className="h-auto p-0 text-primary" onClick={() => { setAccountTab("register"); go("account"); }}>Create account</Button>
           <span className="text-muted-foreground">·</span>
           <Button variant="link" className="h-auto p-0 text-muted-foreground" onClick={() => { setAccountTab("reset"); go("account"); }}>Forgot password?</Button>
-        </div>}
+        </div>
       </section>}
 
       {screen === "account" && <section className="mx-auto flex max-w-md flex-col items-center pt-10 text-center sm:pt-16">
