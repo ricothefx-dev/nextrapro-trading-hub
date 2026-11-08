@@ -1,4 +1,7 @@
 # NEXTRAPRO app
+- [ ] Add secure copy-trading profiles, role assignments, provider accounts, client MT5 connections, signals, and execution records in Lovable Cloud.
+- [ ] Verify new table grants and row-level policies; keep passwords out and trade execution unimplemented.
+- [ ] Repair the trading assistant JSX error and verify the preview renders.
 - [x] Connect Get iOS Now to the licence-first trading app.
 - [x] Add activated bot, symbol configuration, scanner, MT5 simulation, and settings controls.
 - [x] Verify entry flow and requested controls.

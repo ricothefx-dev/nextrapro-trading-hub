@@ -13,3 +13,4 @@
 - Mentor accounts, bots and licence keys are real (Lovable Cloud); the app activates keys via the activate_licence database function. Scanner results and MT5 connections stay labelled as simulated until real services are connected.
 - Isolate the trading assistant in its own component and scoped theme; its visual settings must not change the public landing or mentor dashboard.
 - Keep trading configuration and MT5 account presentation in separate client components; persist only interface preferences locally and never save MT5 passwords.
+- Keep copy-trading identities and role assignments in separate tables, restrict execution writes to trusted server-side access, and never store MT5 passwords.
