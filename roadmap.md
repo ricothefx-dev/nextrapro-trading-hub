@@ -1,7 +1,7 @@
 # NEXTRAPRO app
-- [ ] Add secure copy-trading profiles, role assignments, provider accounts, client MT5 connections, signals, and execution records in Lovable Cloud.
-- [ ] Verify new table grants and row-level policies; keep passwords out and trade execution unimplemented.
-- [ ] Repair the trading assistant JSX error and verify the preview renders.
+- [x] Add secure copy-trading profiles, role assignments, provider accounts, client MT5 connections, signals, and execution records in Lovable Cloud.
+- [x] Verify new table grants and row-level policies; keep passwords out and trade execution unimplemented.
+- [x] Repair the trading assistant JSX error and verify the preview renders.
 - [x] Connect Get iOS Now to the licence-first trading app.
 - [x] Add activated bot, symbol configuration, scanner, MT5 simulation, and settings controls.
 - [x] Verify entry flow and requested controls.
@@ -10,4 +10,4 @@
 - [x] Restyle home like the Ghost Rider reference (round glowing bot, Remove/Start/Symbols circles) and replace the Settings tab with AI Scanner.
 - [x] Restore the interface settings slide-over (gear icon) with custom robot picture, shapes, fonts, colours and modes.
 - [x] Add the app account screens (Sign in / Register / Reset) from the app structure.
-- [ ] Verify the updated app views in the browser.
+- [x] Verify the updated app view and licence entry screen in the browser.
