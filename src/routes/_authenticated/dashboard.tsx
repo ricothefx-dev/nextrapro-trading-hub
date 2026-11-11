@@ -258,21 +258,14 @@ function CopyTrading({ bots }: { bots: BotRow[] }) {
   const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
   return <div className="space-y-4">
     <PageTitle icon={TrendingUp} first="Copy" accent="Trading" />
-    <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="text-sm font-bold">1. Mentor: Sender EA</h3>
-        <p className="mt-2 text-xs text-muted-foreground">Put this on your MT5. Every trade you open, close or change is sent to your clients.</p>
-        <Button asChild className="mt-4"><a href="/ea/NEXTRAPRO_Sender.mq5" download>Download Sender EA</a></Button>
-      </div>
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="text-sm font-bold">2. Client: Receiver EA</h3>
-        <p className="mt-2 text-xs text-muted-foreground">Clients put this on their MT5 (PC or VPS) with their licence key. It copies your trades using their own risk.</p>
-        <Button asChild className="mt-4"><a href="/ea/NEXTRAPRO_Receiver.mq5" download>Download Receiver EA</a></Button>
-      </div>
+    <div className="rounded-lg border border-border bg-card p-5">
+      <h3 className="text-sm font-bold">Master Sender EA</h3>
+      <p className="mt-2 text-xs text-muted-foreground">Install on your master MT5 account. It sends every OPEN, CLOSE and SL/TP MODIFY to NEXTRAPRO.</p>
+      <Button asChild className="mt-4"><a href="/ea/NEXTRAPRO_Master_Sender.mq5" download>Download NEXTRAPRO_Master_Sender.mq5</a></Button>
     </div>
     <div className="rounded-lg border border-border bg-card p-5">
       <h3 className="text-sm font-bold">Your bot EA tokens</h3>
-      <p className="mt-1 text-xs text-muted-foreground">Paste a bot's token into the Sender EA. Keep it private.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Paste a bot's token into the Master Sender EA as ProviderToken. Keep it private.</p>
       <div className="mt-3 space-y-2">
         {bots.length === 0 && <p className="text-xs text-muted-foreground">Create a bot first.</p>}
         {(tokens.data ?? []).map(b => <div key={b.id} className="flex items-center gap-2 rounded-md border border-border p-2">
@@ -287,8 +280,8 @@ function CopyTrading({ bots }: { bots: BotRow[] }) {
       <ol className="list-decimal space-y-1 pl-4">
         <li>Open MetaEditor, paste the file into Experts, press Compile.</li>
         <li>Tools → Options → Expert Advisors → tick "Allow WebRequest" and add https://nextra-pro-trader.lovable.app</li>
-        <li>Drag the EA onto any chart, turn on Algo Trading, enter the token (mentor) or licence key (client).</li>
-        <li>MT5 must stay open — use a VPS for 24/7 copying.</li>
+        <li>Drag the EA onto any chart, turn on Algo Trading, paste your provider token.</li>
+        <li>MT5 must stay open — use a VPS for 24/7 sending.</li>
       </ol>
     </div>
   </div>;

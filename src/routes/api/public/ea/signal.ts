@@ -11,6 +11,7 @@ const schema = z.object({
   price: z.coerce.number().nonnegative().optional(),
   sl: z.coerce.number().nonnegative().optional(),
   tp: z.coerce.number().nonnegative().optional(),
+  ts: z.coerce.number().int().nonnegative().optional(),
 });
 
 export const Route = createFileRoute("/api/public/ea/signal")({
@@ -33,6 +34,13 @@ export const Route = createFileRoute("/api/public/ea/signal")({
         if (!bot) return new Response("Unauthorized", { status: 401 });
         const s = parsed.data;
         if (s.action === "open" && !s.side) return new Response("Side required", { status: 400 });
+        // Duplicate protection: open/close are unique per ticket; modify is skipped when SL/TP are unchanged.
+        const dup = supabaseAdmin.from("signals").select("id,sl,tp").eq("bot_id", bot.id).eq("ticket", s.ticket).eq("action", s.action).order("id", { ascending: false }).limit(1);
+        const { data: prev } = await dup;
+        const last = prev?.[0];
+        if (last && (s.action !== "modify" || (Number(last.sl ?? 0) === (s.sl || 0) && Number(last.tp ?? 0) === (s.tp || 0)))) {
+          return new Response("OK|DUPLICATE");
+        }
         const { error } = await supabaseAdmin.from("signals").insert({
           bot_id: bot.id, mentor_id: bot.mentor_id, action: s.action, ticket: s.ticket, symbol: s.symbol.toUpperCase(),
           side: s.side ?? null, volume: s.volume ?? null, price: s.price ?? null, sl: s.sl || null, tp: s.tp || null,
