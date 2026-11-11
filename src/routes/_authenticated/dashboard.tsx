@@ -83,7 +83,7 @@ function Index() {
           {section === "Generate Key" && <GenerateKey bots={bots.data ?? []} used={licences.data?.length ?? 0} onChange={refresh} goBots={() => pick("My Bots")} />}
           {section === "Licences" && <Licences bots={bots.data ?? []} licences={licences.data ?? []} onChange={refresh} />}
           {section === "Affiliate" && <EmptyPanel icon={Users} title="Affiliate program" text="Affiliate commissions are not set up yet. Tell us your commission rules and we will add them." />}
-          {section === "Copy Trading" && <EmptyPanel icon={TrendingUp} title="Copy trading" text="Copy trading needs a connection to a MetaTrader bridge server, which is not connected yet." />}
+          {section === "Copy Trading" && <CopyTrading bots={bots.data ?? []} />}
         </div>
       </main>
     </div>
@@ -248,4 +248,48 @@ function Licences({ bots, licences, onChange }: { bots: BotRow[]; licences: Lice
 
 function EmptyPanel({ icon: Icon, title, text, action, onAction }: { icon: typeof Users; title: string; text: string; action?: string; onAction?: () => void }) {
   return <section className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-border bg-card p-7 text-center"><div className="flex size-14 items-center justify-center rounded-full border border-primary/25 bg-primary/10"><Icon className="text-primary" /></div><h2 className="mt-5 text-base font-bold">{title}</h2><p className="mt-2 max-w-md text-[11px] leading-5 text-muted-foreground">{text}</p>{action && <Button className="mt-5" onClick={onAction}>{action}</Button>}</section>;
+}
+
+function CopyTrading({ bots }: { bots: BotRow[] }) {
+  const tokens = useQuery({ queryKey: ["ea-tokens"], queryFn: async () => {
+    const { data, error } = await supabase.from("bots").select("id,name,ea_token");
+    if (error) throw error; return data;
+  } });
+  const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
+  return <div className="space-y-4">
+    <PageTitle icon={TrendingUp} first="Copy" accent="Trading" />
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h3 className="text-sm font-bold">1. Mentor: Sender EA</h3>
+        <p className="mt-2 text-xs text-muted-foreground">Put this on your MT5. Every trade you open, close or change is sent to your clients.</p>
+        <Button asChild className="mt-4"><a href="/ea/NEXTRAPRO_Sender.mq5" download>Download Sender EA</a></Button>
+      </div>
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h3 className="text-sm font-bold">2. Client: Receiver EA</h3>
+        <p className="mt-2 text-xs text-muted-foreground">Clients put this on their MT5 (PC or VPS) with their licence key. It copies your trades using their own risk.</p>
+        <Button asChild className="mt-4"><a href="/ea/NEXTRAPRO_Receiver.mq5" download>Download Receiver EA</a></Button>
+      </div>
+    </div>
+    <div className="rounded-lg border border-border bg-card p-5">
+      <h3 className="text-sm font-bold">Your bot EA tokens</h3>
+      <p className="mt-1 text-xs text-muted-foreground">Paste a bot's token into the Sender EA. Keep it private.</p>
+      <div className="mt-3 space-y-2">
+        {bots.length === 0 && <p className="text-xs text-muted-foreground">Create a bot first.</p>}
+        {(tokens.data ?? []).map(b => <div key={b.id} className="flex items-center gap-2 rounded-md border border-border p-2">
+          <span className="w-32 truncate text-xs font-semibold">{b.name}</span>
+          <code className="flex-1 truncate text-[10px] text-muted-foreground">{b.ea_token}</code>
+          <Button size="icon" variant="ghost" aria-label="Copy token" onClick={() => copy(b.ea_token)}><Copy /></Button>
+        </div>)}
+      </div>
+    </div>
+    <div className="rounded-lg border border-border bg-card p-5 text-xs text-muted-foreground">
+      <h3 className="mb-2 text-sm font-bold text-foreground">Setup in MT5</h3>
+      <ol className="list-decimal space-y-1 pl-4">
+        <li>Open MetaEditor, paste the file into Experts, press Compile.</li>
+        <li>Tools → Options → Expert Advisors → tick "Allow WebRequest" and add https://nextra-pro-trader.lovable.app</li>
+        <li>Drag the EA onto any chart, turn on Algo Trading, enter the token (mentor) or licence key (client).</li>
+        <li>MT5 must stay open — use a VPS for 24/7 copying.</li>
+      </ol>
+    </div>
+  </div>;
 }
