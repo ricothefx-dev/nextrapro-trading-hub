@@ -261,7 +261,10 @@ function CopyTrading({ bots }: { bots: BotRow[] }) {
     <div className="rounded-lg border border-border bg-card p-5">
       <h3 className="text-sm font-bold">Master Sender EA</h3>
       <p className="mt-2 text-xs text-muted-foreground">Install on your master MT5 account. It sends every OPEN, CLOSE and SL/TP MODIFY to NEXTRAPRO.</p>
-      <Button asChild className="mt-4"><a href="/ea/NEXTRAPRO_Master_Sender.mq5" download>Download NEXTRAPRO_Master_Sender.mq5</a></Button>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <Button asChild><a href="/ea/NEXTRAPRO_Master_Sender.mq5" download>Download NEXTRAPRO_Master_Sender.mq5</a></Button>
+        <Button asChild variant="outline"><a href="https://nextra-pro-trader.lovable.app" target="_blank" rel="noreferrer">Open NEXTRAPRO <ExternalLink className="ml-2 size-3.5" /></a></Button>
+      </div>
     </div>
     <div className="rounded-lg border border-border bg-card p-5">
       <h3 className="text-sm font-bold">Your bot EA tokens</h3>
